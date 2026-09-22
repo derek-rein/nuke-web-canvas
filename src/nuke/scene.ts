@@ -74,19 +74,11 @@ export function buildScene(script: ParsedScript, measure: MeasureText): DagScene
   return layout(script.root, measure);
 }
 
-export function pipeSamples(from: Anchor, to: Anchor, steps: number): Array<{ x: number; y: number }> {
-  const distance = Math.hypot(to.x - from.x, to.y - from.y);
-  const control = clamp(distance * 0.5, 24, 180);
-  const p0 = from;
-  const p1 = controlPoint(from, control, "leave");
-  const p2 = controlPoint(to, control, "arrive");
-  const p3 = to;
-  const count = Math.max(1, steps);
-  const points: Array<{ x: number; y: number }> = [];
-  for (let step = 0; step <= count; step += 1) {
-    points.push(cubic(p0, p1, p2, p3, step / count));
-  }
-  return points;
+export function pipeSamples(from: Anchor, to: Anchor, _steps: number): Array<{ x: number; y: number }> {
+  return [
+    { x: from.x, y: from.y },
+    { x: to.x, y: to.y },
+  ];
 }
 
 function layout(raw: RawNode, measure: MeasureText): DagScene {
@@ -320,36 +312,4 @@ function numberKnob(value: string | undefined): number | null {
 
 function truthy(value: string | undefined): boolean {
   return value === "true" || value === "1";
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function controlPoint(anchor: Anchor, distance: number, role: "leave" | "arrive"): { x: number; y: number } {
-  if (role === "leave") {
-    if (anchor.side === "top") return { x: anchor.x, y: anchor.y - distance };
-    if (anchor.side === "left") return { x: anchor.x - distance, y: anchor.y };
-    if (anchor.side === "right") return { x: anchor.x + distance, y: anchor.y };
-    return { x: anchor.x, y: anchor.y + distance };
-  }
-  if (anchor.side === "bottom") return { x: anchor.x, y: anchor.y + distance };
-  if (anchor.side === "left") return { x: anchor.x - distance, y: anchor.y };
-  if (anchor.side === "right") return { x: anchor.x + distance, y: anchor.y };
-  if (anchor.side === "center") return { x: anchor.x, y: anchor.y - distance };
-  return { x: anchor.x, y: anchor.y - distance };
-}
-
-function cubic(
-  p0: { x: number; y: number },
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-  p3: { x: number; y: number },
-  t: number,
-): { x: number; y: number } {
-  const u = 1 - t;
-  return {
-    x: u * u * u * p0.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * p3.x,
-    y: u * u * u * p0.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * p3.y,
-  };
 }

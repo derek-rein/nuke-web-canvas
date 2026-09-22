@@ -133,11 +133,11 @@ function pushPipe(
   vertices: Vertex[],
   from: Anchor,
   to: Anchor,
-  zoom: number,
+  _zoom: number,
 ): void {
   const samples = pipeSamples(from, to, 20);
-  const width = Math.max(2, 1 / Math.max(zoom, 0.0001));
-  const color: [number, number, number, number] = [0.78, 0.78, 0.78, 1];
+  const width = 2;
+  const color: [number, number, number, number] = [0, 0, 0, 1];
   for (let index = 0; index < samples.length - 1; index += 1) {
     const a = samples[index];
     const b = samples[index + 1];
@@ -183,11 +183,11 @@ function pushArrow(
   const length = Math.hypot(dx, dy) || 1;
   const ux = dx / length;
   const uy = dy / length;
-  const size = 7;
+  const size = 12;
   const baseX = to.x - ux * size;
   const baseY = to.y - uy * size;
-  const px = -uy * (size * 0.55);
-  const py = ux * (size * 0.55);
+  const px = -uy * 4;
+  const py = ux * 4;
   const triangle: Array<[number, number]> = [
     [to.x, to.y],
     [baseX + px, baseY + py],

@@ -417,11 +417,12 @@ Grade {
   expect(nodeNamed(scene.nodes, "Grade1").hideInput).toBe(true);
 });
 
-test("pipe samples leave a bottom anchor downward", () => {
+test("pipes are a straight segment between the anchors", () => {
   const samples = pipeSamples({ x: 0, y: 0, side: "bottom" }, { x: 10, y: 80, side: "top" }, 4);
-  expect(samples[0]).toEqual({ x: 0, y: 0 });
-  expect(samples[samples.length - 1]).toEqual({ x: 10, y: 80 });
-  expect(samples[1]!.y).toBeGreaterThan(0);
+  expect(samples).toEqual([
+    { x: 0, y: 0 },
+    { x: 10, y: 80 },
+  ]);
 });
 
 test("nodes without positions stack below each other", () => {

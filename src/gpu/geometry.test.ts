@@ -81,6 +81,8 @@ Grade {
   const to = { x: grade!.x + grade!.w / 2, y: grade!.bodyY };
   expect(vertices.some((vertex) => Math.hypot(vertex.x - from.x, vertex.y - from.y) <= 2)).toBe(true);
   expect(vertices.some((vertex) => Math.hypot(vertex.x - to.x, vertex.y - to.y) <= 2)).toBe(true);
+  expect(vertices.some((vertex) => vertex.r === 0 && vertex.g === 0 && vertex.b === 0)).toBe(true);
+  expect(vertices.some((vertex) => vertex.r === 0.78 && vertex.g === 0.78 && vertex.b === 0.78)).toBe(false);
 });
 
 test("glyphs appear only when zoomed in", () => {
