@@ -51,7 +51,24 @@ export type DagScene = {
 
 export type MeasureText = (line: string) => number;
 
+export const NODE_FONT_SIZE = 11;
+export const LABEL_PAD = 8;
+export const CLONE_MARK = 14;
+
 const GROUP_CLASSES = new Set(["Group", "Gizmo", "LiveGroup", "VariableGroup"]);
+
+export function noteFontSize(kind: DagNode["kind"], knobs: Record<string, string>): number {
+  if (kind === "backdrop" || kind === "sticky") {
+    const raw = Number(knobs.note_font_size);
+    if (Number.isFinite(raw) && raw > 0) return raw;
+    return kind === "backdrop" ? 16 : 14;
+  }
+  return NODE_FONT_SIZE;
+}
+
+export function labelLineHeight(fontSize: number): number {
+  return fontSize * 1.15;
+}
 
 export function buildScene(script: ParsedScript, measure: MeasureText): DagScene {
   return layout(script.root, measure);
@@ -105,6 +122,7 @@ function buildNode(raw: RawNode, measure: MeasureText): DagNode {
   const labelLines = linesFor(raw, kind);
   const postage = kind === "node" && truthy(raw.knobs.postage_stamp);
   const sized = sizeOf(kind, labelLines, measure, raw.knobs, postage);
+  if (raw.cloneOf && kind === "node") sized.w += CLONE_MARK;
   const x = numberKnob(raw.knobs.xpos) ?? 0;
   const y = numberKnob(raw.knobs.ypos) ?? 0;
   const color = parseTileColor(raw.knobs.tile_color) ?? classColor(raw.className);
@@ -252,9 +270,16 @@ function sizeOf(
     const h = numberKnob(knobs.bdheight) ?? 200;
     return { w, h, bodyH: h, stamp: 0 };
   }
+  if (kind === "sticky") {
+    const fontSize = noteFontSize(kind, knobs);
+    const scale = fontSize / NODE_FONT_SIZE;
+    const textWidth = lines.reduce((widest, line) => Math.max(widest, measure(line)), 0) * scale;
+    const bodyH = Math.ceil(LABEL_PAD + lines.length * labelLineHeight(fontSize) + LABEL_PAD);
+    const w = Math.max(100, Math.ceil(textWidth + LABEL_PAD * 2));
+    return { w, h: bodyH, bodyH, stamp: 0 };
+  }
   const textWidth = lines.reduce((widest, line) => Math.max(widest, measure(line)), 0);
-  const minimum = kind === "sticky" ? 100 : 80;
-  const w = Math.max(minimum, Math.ceil(textWidth + 16));
+  const w = Math.max(80, Math.ceil(textWidth + 16));
   const bodyH = lines.length <= 1 ? 18 : 18 + (lines.length - 1) * 12;
   const stamp = postage ? 46 : 0;
   return { w, h: bodyH + stamp, bodyH, stamp };

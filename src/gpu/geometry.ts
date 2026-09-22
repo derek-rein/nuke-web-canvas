@@ -1,4 +1,14 @@
-import { pipeSamples, type Anchor, type DagNode, type DagScene } from "../nuke/scene.ts";
+import {
+  CLONE_MARK,
+  LABEL_PAD,
+  labelLineHeight,
+  noteFontSize,
+  pipeSamples,
+  type Anchor,
+  type DagNode,
+  type DagScene,
+  type Pipe,
+} from "../nuke/scene.ts";
 
 export type Vertex = {
   x: number;
@@ -56,25 +66,15 @@ export function buildGeometry(
     for (const pipe of scene.pipes) {
       if (pipe.toId !== node.id) continue;
       pushPipe(vertices, pipe.from, pipe.to, zoom);
+      if (atlas && zoom >= TEXT_ZOOM) pushPipeLabel(vertices, pipe, atlas);
     }
   }
   for (const node of scene.nodes) {
     if (node.kind === "backdrop" || node.kind === "sticky") continue;
     pushNode(vertices, node);
-    if (node.cloneOf) {
-      pushQuad(
-        vertices,
-        node.x + node.w - 10,
-        node.bodyY + 2,
-        8,
-        8,
-        [0.96, 0.96, 0.96, 0.9],
-        MODE_SOLID,
-        0,
-      );
-    }
+    if (node.cloneOf && node.kind === "node") pushCloneChip(vertices, node);
     if (node.disabled) pushCross(vertices, node);
-    if (node.cloneOf && atlas && zoom >= TEXT_ZOOM) pushCloneMark(vertices, node, atlas);
+    if (node.cloneOf && node.kind === "node" && atlas && zoom >= TEXT_ZOOM) pushCloneMark(vertices, node, atlas);
     if (selectedId === node.id) pushSelection(vertices, node);
   }
   if (atlas && zoom >= TEXT_ZOOM) {
@@ -221,41 +221,119 @@ function pushSelection(vertices: Vertex[], node: DagNode): void {
   pushRoundRect(vertices, x + w - t, y, t, h, color, 1);
 }
 
+function pushPipeLabel(vertices: Vertex[], pipe: Pipe, atlas: GlyphLookup): void {
+  if (!pipe.label) return;
+  const fontSize = 10;
+  const width = glyphWidth(pipe.label, fontSize, atlas);
+  let x = pipe.to.x;
+  let centerY = pipe.to.y;
+  if (pipe.to.side === "top") {
+    x = pipe.to.x - width / 2;
+    centerY = pipe.to.y - 16;
+  } else if (pipe.to.side === "right") {
+    x = pipe.to.x + 8;
+    centerY = pipe.to.y - 12;
+  } else if (pipe.to.side === "left") {
+    x = pipe.to.x - width - 8;
+    centerY = pipe.to.y - 12;
+  } else {
+    return;
+  }
+  const plateH = fontSize + 4;
+  pushRoundRect(vertices, x - 3, centerY - plateH / 2, width + 6, plateH, [0.07, 0.07, 0.07, 1], 2);
+  pushCenteredGlyphs(vertices, pipe.label, x, centerY, fontSize, [0.95, 0.95, 0.95, 1], atlas);
+}
+
+function pushCloneChip(vertices: Vertex[], node: DagNode): void {
+  const chip = CLONE_MARK - 2;
+  const chipH = Math.min(chip, Math.max(1, node.bodyH - 4));
+  pushRoundRect(
+    vertices,
+    node.x + node.w - CLONE_MARK + 1,
+    node.bodyY + 2,
+    chip,
+    chipH,
+    [0.1, 0.1, 0.1, 1],
+    2,
+  );
+}
+
 function pushText(vertices: Vertex[], node: DagNode, atlas: GlyphLookup): void {
   if (node.labelLines.length === 0) return;
-  const fontSize = textSize(node);
+  const fontSize = noteFontSize(node.kind, node.knobs);
   const scale = fontSize / 48;
-  const lineHeight = fontSize * 1.15;
+  const lineHeight = labelLineHeight(fontSize);
   const blockHeight = node.labelLines.length * lineHeight;
-  let originY: number;
-  if (node.kind === "backdrop" || node.kind === "sticky") originY = node.y + 8;
-  else originY = node.bodyY + node.bodyH / 2 - blockHeight / 2;
+  const reserve = node.cloneOf && node.kind === "node" ? CLONE_MARK : 0;
+  const originY =
+    node.kind === "backdrop" || node.kind === "sticky"
+      ? node.y + LABEL_PAD
+      : node.bodyY + node.bodyH / 2 - blockHeight / 2;
   node.labelLines.forEach((line, index) => {
     const glyphs = atlas.glyphsFor(line);
     const width = glyphs.reduce((sum, glyph) => sum + glyph.advance * scale, 0);
     let cursor =
-      node.kind === "backdrop" || node.kind === "sticky" ? node.x + 8 : node.x + node.w / 2 - width / 2;
+      node.kind === "backdrop" || node.kind === "sticky"
+        ? node.x + LABEL_PAD
+        : node.x + (node.w - reserve) / 2 - width / 2;
     const baseline = originY + index * lineHeight + fontSize;
     for (const glyph of glyphs) {
-      const gx = cursor + glyph.bearingX * scale;
-      const gy = baseline - glyph.bearingY * scale;
-      const gw = glyph.width * scale;
-      const gh = glyph.height * scale;
-      pushGlyph(vertices, gx, gy, gw, gh, node.textColor, glyph);
+      pushGlyph(
+        vertices,
+        cursor + glyph.bearingX * scale,
+        baseline - glyph.bearingY * scale,
+        glyph.width * scale,
+        glyph.height * scale,
+        node.textColor,
+        glyph,
+      );
       cursor += glyph.advance * scale;
     }
   });
 }
 
 function pushCloneMark(vertices: Vertex[], node: DagNode, atlas: GlyphLookup): void {
-  const glyphs = atlas.glyphsFor("C");
-  const glyph = glyphs[0];
+  const glyph = atlas.glyphsFor("C")[0];
   if (!glyph) return;
-  const size = 8;
-  const scale = size / 48;
-  const x = node.x + node.w - size - 2;
-  const y = node.bodyY + 1;
-  pushGlyph(vertices, x, y, glyph.width * scale, glyph.height * scale, [0.96, 0.96, 0.96, 0.9], glyph);
+  const fontSize = 9;
+  const scale = fontSize / 48;
+  const chip = CLONE_MARK - 2;
+  const chipH = Math.min(chip, Math.max(1, node.bodyH - 4));
+  const gw = glyph.width * scale;
+  const gh = glyph.height * scale;
+  pushGlyph(
+    vertices,
+    node.x + node.w - CLONE_MARK + 1 + (chip - gw) / 2,
+    node.bodyY + 2 + (chipH - gh) / 2,
+    gw,
+    gh,
+    [0.97, 0.97, 0.97, 1],
+    glyph,
+  );
+}
+
+function pushCenteredGlyphs(
+  vertices: Vertex[],
+  text: string,
+  x: number,
+  centerY: number,
+  fontSize: number,
+  color: [number, number, number, number],
+  atlas: GlyphLookup,
+): void {
+  const scale = fontSize / 48;
+  let cursor = x;
+  for (const glyph of atlas.glyphsFor(text)) {
+    const gw = glyph.width * scale;
+    const gh = glyph.height * scale;
+    pushGlyph(vertices, cursor + glyph.bearingX * scale, centerY - gh / 2, gw, gh, color, glyph);
+    cursor += glyph.advance * scale;
+  }
+}
+
+function glyphWidth(text: string, fontSize: number, atlas: GlyphLookup): number {
+  const scale = fontSize / 48;
+  return atlas.glyphsFor(text).reduce((sum, glyph) => sum + glyph.advance * scale, 0);
 }
 
 function pushGlyph(
@@ -278,15 +356,6 @@ function pushGlyph(
   for (const [px, py, u, v] of corners) {
     vertices.push(vertex(px, py, color, u, v, MODE_GLYPH, 0));
   }
-}
-
-function textSize(node: DagNode): number {
-  if (node.kind === "backdrop" || node.kind === "sticky") {
-    const raw = Number(node.knobs.note_font_size);
-    if (Number.isFinite(raw) && raw > 0) return raw;
-    return node.kind === "backdrop" ? 16 : 14;
-  }
-  return 11;
 }
 
 function vertex(

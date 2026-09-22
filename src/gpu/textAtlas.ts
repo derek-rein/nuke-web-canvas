@@ -1,3 +1,4 @@
+import { NODE_FONT_SIZE } from "../nuke/scene.ts";
 import type { Glyph, GlyphLookup } from "./geometry.ts";
 
 const ATLAS = 2048;
@@ -6,7 +7,7 @@ const SOURCE_SIZE = 48;
 export function measureDagText(line: string): number {
   const ctx = measureContext();
   if (!ctx) return line.length * 6.2;
-  ctx.font = "11px Verdana, sans-serif";
+  ctx.font = `${NODE_FONT_SIZE}px Verdana, sans-serif`;
   return ctx.measureText(line).width;
 }
 

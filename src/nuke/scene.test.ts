@@ -282,6 +282,51 @@ Grade {
   expect(pipe?.to.y).not.toBe(stamped.y);
 });
 
+test("sticky notes grow with note_font_size so the text fits", () => {
+  const sceneFor = (font: string) =>
+    sceneOf(`
+StickyNote {
+ inputs 0
+ name StickyNote1
+ label "hero over bg\\nmask from roto"
+ ${font}
+ xpos 0
+ ypos 0
+}
+`);
+  const small = nodeNamed(sceneFor("note_font_size 10").nodes, "StickyNote1");
+  const big = nodeNamed(sceneFor("note_font_size 30").nodes, "StickyNote1");
+  expect(big.h).toBeGreaterThan(small.h);
+  expect(big.w).toBeGreaterThan(small.w);
+  const fitted = nodeNamed(sceneFor("note_font_size 14").nodes, "StickyNote1");
+  const font = 14;
+  const scale = font / 11;
+  const widest = "mask from roto".length * 6 * scale;
+  expect(fitted.w).toBeGreaterThanOrEqual(Math.ceil(widest + 16));
+  expect(fitted.h).toBeGreaterThanOrEqual(Math.ceil(8 + 2 * font * 1.15 + 8));
+});
+
+test("a clone leaves room beside its name for the clone mark", () => {
+  const scene = sceneOf(`
+Grade {
+ inputs 0
+ name Grade1
+ xpos 0
+ ypos 0
+}
+set Ng [stack 0]
+clone $Ng {
+ inputs 0
+ name Grade1Clone
+ xpos 120
+ ypos 0
+}
+`);
+  const clone = nodeNamed(scene.nodes, "Grade1Clone");
+  expect(clone.cloneOf).toBeTruthy();
+  expect(clone.w).toBe(Math.ceil("Grade1Clone".length * 6 + 16) + 14);
+});
+
 test("backdrops use their bounds and sticky notes have no pipes", () => {
   const scene = sceneOf(`
 Read {

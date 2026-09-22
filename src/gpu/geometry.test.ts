@@ -148,6 +148,85 @@ BackdropNode {
   expect(vertices[0]?.r).toBe(0);
 });
 
+test("merge inputs are labeled outside the node", () => {
+  const scene = sceneOf(`
+Constant {
+ inputs 0
+ name C0
+ xpos 0
+ ypos 0
+}
+Constant {
+ inputs 0
+ name C1
+ xpos 100
+ ypos 0
+}
+Constant {
+ inputs 0
+ name C2
+ xpos 200
+ ypos 0
+}
+Merge2 {
+ inputs 2+1
+ name Merge1
+ xpos 80
+ ypos 80
+}
+`);
+  const merge = scene.nodes.find((node) => node.name === "Merge1");
+  expect(merge).toBeTruthy();
+  const pipes = scene.pipes.filter((pipe) => pipe.toId === merge!.id);
+  const beside = (label: string, dx: number, dy: number) => {
+    const pipe = pipes.find((item) => item.label === label);
+    expect(pipe).toBeTruthy();
+    return glyphs.some(
+      (vertex) =>
+        Math.abs(vertex.x - (pipe!.to.x + dx)) < 18 && Math.abs(vertex.y - (pipe!.to.y + dy)) < 16,
+    );
+  };
+  const glyphs = buildGeometry(scene, 1, atlas, null).filter((vertex) => vertex.mode === 3);
+  expect(beside("B", 0, -12)).toBe(true);
+  expect(beside("A", 0, -12)).toBe(true);
+  expect(beside("mask", 12, 0)).toBe(true);
+});
+
+test("a clone mark sits in the reserved corner and does not cover the name", () => {
+  const scene = sceneOf(`
+Grade {
+ inputs 0
+ name Grade1
+ xpos 0
+ ypos 0
+}
+set Ng [stack 0]
+clone $Ng {
+ inputs 0
+ name Grade1Clone
+ xpos 120
+ ypos 0
+}
+`);
+  const clone = scene.nodes.find((node) => node.name === "Grade1Clone");
+  expect(clone).toBeTruthy();
+  const vertices = buildGeometry(scene, 1, atlas, null);
+  const lightSolids = vertices.filter(
+    (vertex) => vertex.mode === 0 && vertex.r > 0.9 && vertex.g > 0.9 && vertex.b > 0.9,
+  );
+  expect(lightSolids).toHaveLength(0);
+  const mark = vertices.filter((vertex) => vertex.mode === 3 && vertex.x >= clone!.x + clone!.w - 14);
+  const name = vertices.filter(
+    (vertex) =>
+      vertex.mode === 3 &&
+      vertex.x < clone!.x + clone!.w - 14 &&
+      vertex.y >= clone!.bodyY &&
+      vertex.y <= clone!.bodyY + clone!.bodyH,
+  );
+  expect(mark.length).toBeGreaterThan(0);
+  expect(name.length).toBeGreaterThan(0);
+});
+
 test("selection adds an orange outline only for the selected id", () => {
   const scene = sceneOf(`
 Grade {
