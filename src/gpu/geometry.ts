@@ -161,6 +161,10 @@ function pushPipe(
   if (last && prev) pushArrow(vertices, prev, last, color, 12, 4);
 }
 
+const LINK_HEAD_LENGTH = 8;
+const LINK_HEAD_HALF = 3;
+const LINK_SHAFT_WIDTH = 1.5;
+
 function pushLinks(vertices: Vertex[], scene: DagScene): void {
   const byId = new Map(scene.nodes.map((node) => [node.id, node]));
   for (const link of scene.links) {
@@ -170,9 +174,105 @@ function pushLinks(vertices: Vertex[], scene: DagScene): void {
     const from = { x: source.x + source.w / 2, y: source.bodyY + source.bodyH / 2 };
     const to = { x: target.x + target.w / 2, y: target.bodyY + target.bodyH / 2 };
     const color = link.kind === "expression" ? EXPRESSION_LINK : CLONE_LINK;
-    pushSegment(vertices, from, to, 1.5, color);
-    pushArrow(vertices, from, to, color, 8, 3);
+    const rect = {
+      left: target.x,
+      top: target.bodyY,
+      right: target.x + target.w,
+      bottom: target.bodyY + target.bodyH,
+    };
+    const edge = linkEdgePoint(to, from, rect);
+    const outward = unitPoint(edge.x - to.x, edge.y - to.y);
+    const tip = clearLinkHead(edge, outward, rect);
+    const tail = { x: tip.x + outward.x * LINK_HEAD_LENGTH, y: tip.y + outward.y * LINK_HEAD_LENGTH };
+    pushSegment(vertices, from, linkShaftEnd(tip, outward, edge, rect), LINK_SHAFT_WIDTH, color);
+    pushArrow(vertices, tail, tip, color, LINK_HEAD_LENGTH, LINK_HEAD_HALF);
   }
+}
+
+type Point = { x: number; y: number };
+type BodyRect = { left: number; top: number; right: number; bottom: number };
+
+function linkEdgePoint(center: Point, toward: Point, rect: BodyRect): Point {
+  const dx = toward.x - center.x;
+  const dy = toward.y - center.y;
+  if (Math.hypot(dx, dy) < 1e-6) return { x: center.x, y: rect.top };
+  let bestT = Number.POSITIVE_INFINITY;
+  let hit: Point | null = null;
+  const consider = (t: number, x: number, y: number) => {
+    if (t <= 1e-8 || t >= bestT) return;
+    if (x < rect.left - 1e-3 || x > rect.right + 1e-3) return;
+    if (y < rect.top - 1e-3 || y > rect.bottom + 1e-3) return;
+    bestT = t;
+    hit = { x, y };
+  };
+  if (dx !== 0) {
+    const tLeft = (rect.left - center.x) / dx;
+    consider(tLeft, rect.left, center.y + dy * tLeft);
+    const tRight = (rect.right - center.x) / dx;
+    consider(tRight, rect.right, center.y + dy * tRight);
+  }
+  if (dy !== 0) {
+    const tTop = (rect.top - center.y) / dy;
+    consider(tTop, center.x + dx * tTop, rect.top);
+    const tBottom = (rect.bottom - center.y) / dy;
+    consider(tBottom, center.x + dx * tBottom, rect.bottom);
+  }
+  return hit ?? { x: center.x, y: rect.top };
+}
+
+function unitPoint(x: number, y: number): Point {
+  const length = Math.hypot(x, y);
+  if (length < 1e-6) return { x: 0, y: -1 };
+  return { x: x / length, y: y / length };
+}
+
+function clearLinkHead(edge: Point, outward: Point, rect: BodyRect): Point {
+  const normal = edgeNormal(edge, outward, rect);
+  const align = normal.x * outward.x + normal.y * outward.y;
+  if (align <= 1e-8) return edge;
+  let shift = 0;
+  for (const side of [1, -1]) {
+    const ox = outward.x * LINK_HEAD_LENGTH - outward.y * LINK_HEAD_HALF * side;
+    const oy = outward.y * LINK_HEAD_LENGTH + outward.x * LINK_HEAD_HALF * side;
+    const signed = ox * normal.x + oy * normal.y;
+    if (signed < 0) shift = Math.max(shift, -signed / align);
+  }
+  if (shift > 0) shift += 1e-4;
+  return { x: edge.x + outward.x * shift, y: edge.y + outward.y * shift };
+}
+
+function linkShaftEnd(tip: Point, outward: Point, edge: Point, rect: BodyRect): Point {
+  const normal = edgeNormal(edge, outward, rect);
+  const align = normal.x * outward.x + normal.y * outward.y;
+  if (align <= 1e-8) return tip;
+  const half = LINK_SHAFT_WIDTH / 2;
+  let shift = 0;
+  for (const side of [1, -1]) {
+    const ox = tip.x - edge.x + outward.y * half * side;
+    const oy = tip.y - edge.y - outward.x * half * side;
+    const signed = ox * normal.x + oy * normal.y;
+    if (signed < 0) shift = Math.max(shift, -signed / align);
+  }
+  if (shift > 0) shift += 1e-4;
+  return { x: tip.x + outward.x * shift, y: tip.y + outward.y * shift };
+}
+
+function edgeNormal(edge: Point, outward: Point, rect: BodyRect): Point {
+  const candidates: Point[] = [];
+  if (Math.abs(edge.x - rect.left) <= 1e-3) candidates.push({ x: -1, y: 0 });
+  if (Math.abs(edge.x - rect.right) <= 1e-3) candidates.push({ x: 1, y: 0 });
+  if (Math.abs(edge.y - rect.top) <= 1e-3) candidates.push({ x: 0, y: -1 });
+  if (Math.abs(edge.y - rect.bottom) <= 1e-3) candidates.push({ x: 0, y: 1 });
+  let best = candidates[0] ?? { x: 0, y: -1 };
+  let bestDot = Number.NEGATIVE_INFINITY;
+  for (const normal of candidates) {
+    const dot = normal.x * outward.x + normal.y * outward.y;
+    if (dot > bestDot) {
+      bestDot = dot;
+      best = normal;
+    }
+  }
+  return best;
 }
 
 function pushSegment(

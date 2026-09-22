@@ -78,10 +78,7 @@ export function NukeDag(props: {
   useEffect(() => {
     cameras.current.clear();
     fittedScene.current = null;
-    selectedIdsRef.current = [];
-    setSelectedIds((ids) => (ids.length === 0 ? ids : []));
-    rendererRef.current?.setSelected([]);
-    setMarquee(null);
+    cancelGesture();
     setPath([]);
   }, [props.script]);
 
@@ -210,6 +207,12 @@ export function NukeDag(props: {
     props.onSelectNode?.(null);
   }
 
+  function cancelGesture() {
+    endGesture.current?.();
+    setMarquee(null);
+    clearSelection();
+  }
+
   function selectedNode(): DagNode | null {
     if (!current) return null;
     const lastId = selectedIdsRef.current.at(-1);
@@ -220,7 +223,7 @@ export function NukeDag(props: {
   function openNode(node: DagNode | null) {
     const next = enterGroupPath(path, node);
     if (!next) return;
-    clearSelection();
+    cancelGesture();
     setPath(next);
   }
 
@@ -274,6 +277,7 @@ export function NukeDag(props: {
     endGesture.current?.();
 
     const stop = () => {
+      settled = true;
       canvas.removeEventListener("pointermove", move);
       canvas.removeEventListener("pointerup", up);
       canvas.removeEventListener("pointercancel", up);
@@ -282,6 +286,7 @@ export function NukeDag(props: {
     endGesture.current = stop;
 
     function move(ev: PointerEvent) {
+      if (settled) return;
       const dx = ev.clientX - startX;
       const dy = ev.clientY - startY;
       if (pan) {
@@ -363,6 +368,7 @@ export function NukeDag(props: {
     endGesture.current?.();
 
     const stop = () => {
+      settled = true;
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
@@ -371,6 +377,7 @@ export function NukeDag(props: {
     endGesture.current = stop;
 
     function move(ev: PointerEvent) {
+      if (settled) return;
       const dag = dagOnMap(mapRect, frame, ev.clientX, ev.clientY);
       cameraRef.current = panWithMinimap(origin, start, dag);
       draw();
@@ -403,7 +410,7 @@ export function NukeDag(props: {
         if (isLeaveGroupKey(event)) {
           if (path.length === 0) return;
           event.preventDefault();
-          clearSelection();
+          cancelGesture();
           setPath(leaveGroupPath(path));
           return;
         }
@@ -503,7 +510,7 @@ export function NukeDag(props: {
             <button
               type="button"
               onClick={() => {
-                clearSelection();
+                cancelGesture();
                 setPath(path.slice(0, index));
               }}
               style={{

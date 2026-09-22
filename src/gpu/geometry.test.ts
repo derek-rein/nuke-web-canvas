@@ -194,6 +194,46 @@ Merge2 {
   expect(beside("mask", 12, 0)).toBe(true);
 });
 
+test("an expression link head sits outside the destination body", () => {
+  const scene = sceneOf(`
+Grade {
+ inputs 0
+ name Grade1
+ xpos 0
+ ypos 0
+}
+Blur {
+ name Blur1
+ size {{Grade1.size}}
+ xpos 200
+ ypos 0
+}
+`);
+  const target = scene.nodes.find((node) => node.name === "Blur1");
+  expect(target).toBeTruthy();
+  const green = buildGeometry(scene, 1, null, null).filter(
+    (vertex) =>
+      Math.abs(vertex.r - 0x6c / 255) <= 0.01 &&
+      Math.abs(vertex.g - 0xbe / 255) <= 0.01 &&
+      Math.abs(vertex.b - 0x6c / 255) <= 0.01,
+  );
+  // The arrow triangle is emitted after the shaft.
+  const head = green.slice(-3);
+  expect(head).toHaveLength(3);
+  const inside = (vertex: { x: number; y: number }) =>
+    vertex.x > target!.x &&
+    vertex.x < target!.x + target!.w &&
+    vertex.y > target!.bodyY &&
+    vertex.y < target!.bodyY + target!.bodyH;
+  const outside = (vertex: { x: number; y: number }) =>
+    vertex.x < target!.x ||
+    vertex.x > target!.x + target!.w ||
+    vertex.y < target!.bodyY ||
+    vertex.y > target!.bodyY + target!.bodyH;
+  expect(head.some(outside)).toBe(true);
+  expect(head.every((vertex) => !inside(vertex))).toBe(true);
+});
+
 test("expression and clone links use their arrow colors", () => {
   const scene = sceneOf(`
 Tracker4 {
