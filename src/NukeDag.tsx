@@ -2,6 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, JSX, PointerEvent as ReactPointerEvent } from "react";
 import { createNukeRenderer, type Camera, type NukeRenderer } from "./gpu/renderer.ts";
 import { hitTest } from "./nuke/hitTest.ts";
+import {
+  MINIMAP_HEIGHT,
+  MINIMAP_WIDTH,
+  minimapFrame,
+  minimapToDag,
+  needsMinimap,
+  paintMinimap,
+  panWithMinimap,
+  viewRect,
+  type MinimapFrame,
+} from "./nuke/minimap.ts";
 import { enterGroupPath, isEnterGroupKey, isLeaveGroupKey, leaveGroupPath } from "./nuke/navigate.ts";
 import { parseNukeScript } from "./nuke/parse.ts";
 import { neighborId, nodesInRect, selectionBounds, toggleId, upstreamIds } from "./nuke/select.ts";
@@ -30,6 +41,11 @@ export function NukeDag(props: {
   const endGesture = useRef<(() => void) | null>(null);
   const [ready, setReady] = useState(false);
   const [marquee, setMarquee] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+  const [mapVisible, setMapVisible] = useState(false);
+  const minimapRef = useRef<HTMLCanvasElement>(null);
+  const sceneRef = useRef<DagScene | null>(null);
+  const mapDragRef = useRef(false);
+  const refreshMinimapRef = useRef<() => void>(() => {});
 
   const parsed = useMemo(() => {
     try {
@@ -42,6 +58,23 @@ export function NukeDag(props: {
 
   const current = parsed.scene ? sceneAt(parsed.scene, path) : null;
   const crumbs = useMemo(() => crumbsFor(parsed.scene, path), [parsed.scene, path]);
+  sceneRef.current = current;
+  // cameraRef is not state, so pan, zoom, fit, and map drag must call this beside renderer.draw().
+  refreshMinimapRef.current = () => {
+    const map = minimapRef.current;
+    const wrap = wrapRef.current;
+    const scene = sceneRef.current;
+    if (!map || !wrap || !scene) {
+      setMapVisible(false);
+      return;
+    }
+    const rect = wrap.getBoundingClientRect();
+    if (rect.width < 2 || rect.height < 2) return;
+    const camera = cameraRef.current;
+    const visible = mapDragRef.current || needsMinimap(scene.bounds, viewRect(camera, rect.width, rect.height));
+    if (visible) paintMinimap(map, scene.nodes, scene.bounds, camera, rect.width, rect.height);
+    setMapVisible(visible);
+  };
 
   useEffect(() => {
     cameras.current.clear();
@@ -94,7 +127,10 @@ export function NukeDag(props: {
     const renderer = rendererRef.current;
     const wrap = wrapRef.current;
     const canvas = canvasRef.current;
-    if (!renderer || !wrap || !canvas || !current) return;
+    if (!renderer || !wrap || !canvas || !current) {
+      if (!current) refreshMinimapRef.current();
+      return;
+    }
     renderer.setScene(current);
     renderer.setSelected(selectedIdsRef.current);
     const paint = () => {
@@ -114,6 +150,7 @@ export function NukeDag(props: {
         setGpuState("error");
         setGpuError(error instanceof Error ? error.message : "Could not draw the node graph");
       }
+      refreshMinimapRef.current();
     };
     let attempts = 0;
     const paintSoon = () => {
@@ -140,6 +177,7 @@ export function NukeDag(props: {
       cameraRef.current = { x: dagX - sx / zoom, y: dagY - sy / zoom, zoom };
       renderer.setCamera(cameraRef.current);
       renderer.draw();
+      refreshMinimapRef.current();
     };
     canvas.addEventListener("wheel", wheel, { passive: false });
     return () => {
@@ -151,6 +189,7 @@ export function NukeDag(props: {
   function draw() {
     rendererRef.current?.setCamera(cameraRef.current);
     rendererRef.current?.draw();
+    refreshMinimapRef.current();
   }
 
   function applySelection(scene: DagScene, ids: readonly string[]) {
@@ -200,6 +239,7 @@ export function NukeDag(props: {
     cameraRef.current = { x: dagX - sx / zoom, y: dagY - sy / zoom, zoom };
     renderer.setCamera(cameraRef.current);
     renderer.draw();
+    refreshMinimapRef.current();
   }
 
   function clientToDag(clientX: number, clientY: number): { x: number; y: number } | null {
@@ -303,6 +343,52 @@ export function NukeDag(props: {
     canvas.addEventListener("pointermove", move);
     canvas.addEventListener("pointerup", up);
     canvas.addEventListener("pointercancel", up);
+  }
+
+  function onMinimapPointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (event.button !== 0) return;
+    const map = minimapRef.current;
+    const wrap = wrapRef.current;
+    const scene = sceneRef.current;
+    if (!map || !wrap || !scene) return;
+    event.preventDefault();
+    event.stopPropagation();
+    wrap.focus({ preventScroll: true });
+    const frame = minimapFrame(scene.bounds);
+    if (!(frame.scale > 0) || !Number.isFinite(frame.scale)) return;
+    map.setPointerCapture(event.pointerId);
+    const origin = { ...cameraRef.current };
+    const start = dagOnMap(map, frame, event.clientX, event.clientY);
+    let settled = false;
+    endGesture.current?.();
+    mapDragRef.current = true;
+
+    const stop = () => {
+      mapDragRef.current = false;
+      map.removeEventListener("pointermove", move);
+      map.removeEventListener("pointerup", up);
+      map.removeEventListener("pointercancel", up);
+      if (endGesture.current === stop) endGesture.current = null;
+      refreshMinimapRef.current();
+    };
+    endGesture.current = stop;
+    refreshMinimapRef.current();
+
+    function move(ev: PointerEvent) {
+      const dag = dagOnMap(map!, frame, ev.clientX, ev.clientY);
+      cameraRef.current = panWithMinimap(origin, start, dag);
+      draw();
+    }
+
+    function up() {
+      if (settled) return;
+      settled = true;
+      stop();
+    }
+
+    map.addEventListener("pointermove", move);
+    map.addEventListener("pointerup", up);
+    map.addEventListener("pointercancel", up);
   }
 
   return (
@@ -453,6 +539,20 @@ export function NukeDag(props: {
           Ctrl+Enter to open
         </p>
       ) : null}
+      <canvas
+        ref={minimapRef}
+        draggable={false}
+        onPointerDown={onMinimapPointerDown}
+        style={{
+          position: "absolute",
+          right: 12,
+          bottom: 12,
+          width: MINIMAP_WIDTH,
+          height: MINIMAP_HEIGHT,
+          display: mapVisible ? "block" : "none",
+          touchAction: "none",
+        }}
+      />
       {parsed.error || gpuError ? (
         <p style={{ position: "absolute", inset: 48, margin: 0, color: "#ddd", font: "12px Verdana, sans-serif" }}>
           {parsed.error ?? gpuError}
@@ -460,6 +560,18 @@ export function NukeDag(props: {
       ) : null}
     </div>
   );
+}
+
+function dagOnMap(
+  map: HTMLCanvasElement,
+  frame: MinimapFrame,
+  clientX: number,
+  clientY: number,
+): { x: number; y: number } {
+  const rect = map.getBoundingClientRect();
+  const localX = rect.width > 0 ? ((clientX - rect.left) / rect.width) * frame.width : 0;
+  const localY = rect.height > 0 ? ((clientY - rect.top) / rect.height) * frame.height : 0;
+  return minimapToDag(frame, localX, localY);
 }
 
 function sceneAt(root: DagScene, path: string[]): DagScene {
