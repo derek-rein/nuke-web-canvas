@@ -5,3 +5,6 @@ storybook-static
 .superpowers
 .DS_Store
 *.local
+.env
+.env.*
+!.env.example

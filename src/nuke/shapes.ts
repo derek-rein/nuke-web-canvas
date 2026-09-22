@@ -1,3 +1,5 @@
+import { catalogEntry } from "./catalog.ts";
+
 export type NodeShape = "rect" | "pill" | "circle" | "deep" | "point" | "particle";
 
 // Strings returned by DD::Image::Op::node_shape in Nuke 17.0v3:
@@ -68,6 +70,8 @@ const PILL = new Set([
 ]);
 
 export function nodeShape(className: string): NodeShape {
+  const listed = catalogEntry(className)?.shape;
+  if (listed) return listed;
   if (CIRCLE.has(className)) return "circle";
   if (POINT.has(className)) return "point";
   if (className.startsWith("Deep")) return "deep";

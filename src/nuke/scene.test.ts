@@ -223,7 +223,7 @@ Blur {
   const blur = nodeNamed(scene.nodes, "Blur1").color;
   expect(blur[0]).toBeCloseTo(0xcc / 255);
   expect(blur[1]).toBeCloseTo(0x80 / 255);
-  expect(blur[2]).toBeCloseTo(0x4d / 255);
+  expect(blur[2]).toBeCloseTo(0x4e / 255);
   expect(blur[3]).toBe(1);
 });
 

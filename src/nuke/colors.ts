@@ -1,3 +1,5 @@
+import { catalogEntry } from "./catalog.ts";
+
 type Rgba = [number, number, number, number];
 
 // Flat tile colors from a fresh Nuke graph (https://i.imgur.com/4fhVHgy.png).
@@ -187,7 +189,8 @@ const CLASS_COLORS: Record<string, string> = {
 };
 
 export function classColor(className: string): Rgba {
-  return rgbHex(CLASS_COLORS[className] ?? DEFAULT);
+  const listed = catalogEntry(className)?.color ?? CLASS_COLORS[className] ?? DEFAULT;
+  return rgbHex(listed);
 }
 
 export function parseTileColor(raw: string | undefined): Rgba | null {

@@ -99,6 +99,35 @@ ParticleEmitter {
   expect(body("ParticleEmitter1").mode).toBe(8);
 });
 
+test("a blur shows an output arrow and an unconnected mask tab", () => {
+  const scene = sceneOf(`
+Blur {
+ inputs 0
+ name Blur1
+ xpos 0
+ ypos 0
+}
+Read {
+ inputs 0
+ name Read1
+ xpos 200
+ ypos 0
+}
+`);
+  const vertices = buildGeometry(scene, 1, null, null).filter((vertex) => vertex.mode === 0);
+  const blur = scene.nodes.find((node) => node.name === "Blur1");
+  const read = scene.nodes.find((node) => node.name === "Read1");
+  expect(blur && read).toBeTruthy();
+  const below = vertices.some(
+    (vertex) => vertex.y > blur!.bodyY + blur!.bodyH && Math.abs(vertex.x - (blur!.x + blur!.w / 2)) < 8,
+  );
+  const maskTab = vertices.some((vertex) => vertex.x > blur!.x + blur!.w && Math.abs(vertex.y - (blur!.bodyY + blur!.bodyH / 2)) < 8);
+  const readMask = vertices.some((vertex) => vertex.x > read!.x + read!.w && vertex.y >= read!.bodyY && vertex.y <= read!.bodyY + read!.bodyH);
+  expect(below).toBe(true);
+  expect(maskTab).toBe(true);
+  expect(readMask).toBe(false);
+});
+
 test("a dot becomes circle vertices", () => {
   const scene = sceneOf(`
 Dot {

@@ -1,3 +1,4 @@
+import { classHasMask } from "../nuke/catalog.ts";
 import {
   LABEL_PAD,
   labelLineHeight,
@@ -111,6 +112,27 @@ function pushNode(vertices: Vertex[], node: DagNode): void {
   }
   pushBody(vertices, node);
   pushChannels(vertices, node);
+  pushPorts(vertices, node);
+}
+
+const PORT: [number, number, number, number] = [0, 0, 0, 1];
+
+function pushPorts(vertices: Vertex[], node: DagNode): void {
+  if (node.kind !== "node" || node.className === "Viewer") return;
+  const centerX = node.x + node.w / 2;
+  const bottom = node.bodyY + node.bodyH;
+  pushArrow(vertices, { x: centerX, y: bottom - 1 }, { x: centerX, y: bottom + 8 }, PORT, 8, 4.5);
+  if (node.hideInput || maskIsConnected(node)) return;
+  if (node.maskInputs <= 0 && !classHasMask(node.className)) return;
+  const midY = node.bodyY + node.bodyH / 2;
+  const edge = node.x + node.w;
+  pushArrow(vertices, { x: edge + 7, y: midY }, { x: edge - 1, y: midY }, node.color, 7, 3.5);
+}
+
+function maskIsConnected(node: DagNode): boolean {
+  if (node.maskInputs <= 0) return false;
+  const mainCount = node.inputs.length - node.maskInputs;
+  return node.inputs.slice(mainCount).some((id) => id != null);
 }
 
 function pushBody(vertices: Vertex[], node: DagNode): void {
