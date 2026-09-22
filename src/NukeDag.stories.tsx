@@ -130,7 +130,7 @@ export const Sample: Story = {
     docs: {
       description: {
         story:
-          "Paste a .nk or .gizmo to replace the graph. Middle-drag or Alt-drag pans. The scroll wheel, +/-, or Alt+middle-drag zooms around the cursor. F or a middle-click frames the selection, or the whole graph when nothing is selected. Drag to select nodes, Shift to add, Ctrl+A to select every node. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. The properties pane is read-only React, and showProperties turns it off. Requires WebGPU.",
+          "Paste a .nk or .gizmo to replace the graph. Middle-drag or Alt-drag pans. Drag with one finger on a phone. The scroll wheel, pinch, +/-, or Alt+middle-drag zooms around the cursor. F or a middle-click frames the selection, or the whole graph when nothing is selected. Drag to select nodes, Shift to add, Ctrl+A to select every node. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. The properties pane is read-only React, and showProperties turns it off. WebGPU is used when the browser has it; phones draw with canvas 2D.",
       },
     },
   },

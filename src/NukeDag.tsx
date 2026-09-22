@@ -50,6 +50,14 @@ export function NukeDag(props: {
   const endGesture = useRef<(() => void) | null>(null);
   const buttonsDown = useRef(new Set<number>());
   const lastPointer = useRef<{ x: number; y: number } | null>(null);
+  const touchPointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef<{
+    distance: number;
+    zoom: number;
+    midX: number;
+    midY: number;
+    camera: Camera;
+  } | null>(null);
   const [ready, setReady] = useState(false);
   const [marquee, setMarquee] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [mapVisible, setMapVisible] = useState(false);
@@ -288,11 +296,26 @@ export function NukeDag(props: {
     const wrap = wrapRef.current;
     if (!canvas || !wrap || !current) return;
     if (event.button !== 0 && event.button !== 1) return;
+    touchPointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     buttonsDown.current.add(event.button);
     lastPointer.current = { x: event.clientX, y: event.clientY };
     wrap.focus({ preventScroll: true });
-    if (event.button === 1 || event.altKey) event.preventDefault();
+    if (event.button === 1 || event.altKey || event.pointerType === "touch") event.preventDefault();
     canvas.setPointerCapture(event.pointerId);
+    if (touchPointers.current.size >= 2) {
+      beginPinch(canvas);
+      const pointerId = event.pointerId;
+      const release = (ev: PointerEvent) => {
+        if (ev.pointerId !== pointerId) return;
+        touchPointers.current.delete(pointerId);
+        if (touchPointers.current.size < 2) pinchRef.current = null;
+        canvas.removeEventListener("pointerup", release);
+        canvas.removeEventListener("pointercancel", release);
+      };
+      canvas.addEventListener("pointerup", release);
+      canvas.addEventListener("pointercancel", release);
+      return;
+    }
     const startX = event.clientX;
     const startY = event.clientY;
     const origin = { ...cameraRef.current };
@@ -303,15 +326,18 @@ export function NukeDag(props: {
     const chordZoom = buttonsDown.current.has(0) && buttonsDown.current.has(1);
     const altMiddleZoom = event.button === 1 && event.altKey;
     const zoom = chordZoom || altMiddleZoom;
-    const pan = !zoom && (event.button === 1 || (event.button === 0 && event.altKey));
+    const pan = !zoom && (event.button === 1 || (event.button === 0 && event.altKey) || event.pointerType === "touch");
     const frameOnRelease = event.button === 1 && !event.altKey && !chordZoom;
     let dragged = false;
+    let pinched = false;
     let settled = false;
     endGesture.current?.();
     setMarquee(null);
 
     const stop = () => {
       settled = true;
+      touchPointers.current.delete(event.pointerId);
+      if (touchPointers.current.size < 2) pinchRef.current = null;
       canvas.removeEventListener("pointermove", move);
       canvas.removeEventListener("pointerup", up);
       canvas.removeEventListener("pointercancel", up);
@@ -321,7 +347,15 @@ export function NukeDag(props: {
 
     function move(ev: PointerEvent) {
       if (settled) return;
+      touchPointers.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
       lastPointer.current = { x: ev.clientX, y: ev.clientY };
+      if (touchPointers.current.size >= 2) {
+        if (!pinchRef.current && canvas) beginPinch(canvas);
+        pinched = true;
+        applyPinch();
+        setMarquee(null);
+        return;
+      }
       const dx = ev.clientX - startX;
       const dy = ev.clientY - startY;
       if (Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) dragged = true;
@@ -354,7 +388,7 @@ export function NukeDag(props: {
       }
       stop();
       setMarquee(null);
-      if (zoom || ev.type === "pointercancel") return;
+      if (zoom || pinched || ev.type === "pointercancel") return;
       if (pan) {
         if (frameOnRelease && !dragged) frameView();
         return;
@@ -388,6 +422,32 @@ export function NukeDag(props: {
     canvas.addEventListener("pointermove", move);
     canvas.addEventListener("pointerup", up);
     canvas.addEventListener("pointercancel", up);
+  }
+
+  function beginPinch(canvas: HTMLCanvasElement) {
+    const points = [...touchPointers.current.values()];
+    const a = points[0];
+    const b = points[1];
+    if (!a || !b) return;
+    const rect = canvas.getBoundingClientRect();
+    pinchRef.current = {
+      distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)),
+      zoom: cameraRef.current.zoom,
+      midX: (a.x + b.x) / 2 - rect.left,
+      midY: (a.y + b.y) / 2 - rect.top,
+      camera: { ...cameraRef.current },
+    };
+  }
+
+  function applyPinch() {
+    const origin = pinchRef.current;
+    const points = [...touchPointers.current.values()];
+    const a = points[0];
+    const b = points[1];
+    if (!origin || !a || !b) return;
+    const distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+    cameraRef.current = zoomAbout(origin.camera, origin.midX, origin.midY, origin.zoom * (distance / origin.distance));
+    draw();
   }
 
   function onMinimapPointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {

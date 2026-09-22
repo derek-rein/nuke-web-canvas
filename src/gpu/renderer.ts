@@ -1,5 +1,6 @@
 import { d, std, tgpu } from "typegpu";
 import type { DagScene } from "../nuke/scene.ts";
+import { createCanvas2DRenderer, shouldUseWebGPU } from "./canvas2d.ts";
 import { buildGeometry, type Vertex } from "./geometry.ts";
 import { TextAtlas } from "./textAtlas.ts";
 
@@ -29,6 +30,18 @@ const CameraSchema = d.struct({
 });
 
 export async function createNukeRenderer(
+  canvas: HTMLCanvasElement,
+  hooks?: { onError?: (message: string) => void },
+): Promise<NukeRenderer> {
+  if (!shouldUseWebGPU()) return createCanvas2DRenderer(canvas);
+  try {
+    return await createWebGpuRenderer(canvas, hooks);
+  } catch {
+    return createCanvas2DRenderer(canvas);
+  }
+}
+
+async function createWebGpuRenderer(
   canvas: HTMLCanvasElement,
   hooks?: { onError?: (message: string) => void },
 ): Promise<NukeRenderer> {
