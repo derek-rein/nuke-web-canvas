@@ -1,0 +1,17 @@
+body {
+  margin: 0;
+  background: #1c1c1c;
+  color: #eee;
+  font-family: Verdana, sans-serif;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.canvas {
+  flex: 1;
+  min-height: 0;
+}
