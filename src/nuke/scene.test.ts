@@ -269,7 +269,56 @@ Merge2 {
 }
 `);
   expect(nodeNamed(scene.nodes, "Read1").labelLines).toEqual(["Read1", "hero.1001.exr"]);
-  expect(nodeNamed(scene.nodes, "Merge1").labelLines).toEqual(["Merge1", "multiply"]);
+  expect(nodeNamed(scene.nodes, "Merge1").labelLines).toEqual(["Merge1 (multiply)"]);
+});
+
+test("groups, dots, and backdrops follow Nuke's label rules", () => {
+  const scene = sceneOf(`
+Group {
+ name grade_group
+ label {[value mix]}
+ mix 0.4
+ xpos 0
+ ypos 0
+}
+end_group
+Dot {
+ name Dot1
+ label corner
+ xpos 0
+ ypos 40
+}
+BackdropNode {
+ name BackdropNode1
+ label {[value title]}
+ title Plate
+ note_font_color 0xff0000ff
+ xpos 0
+ ypos 80
+ bdwidth 100
+ bdheight 40
+}
+FrameHold {
+ inputs 0
+ name FrameHold1
+ first_frame 1080
+ xpos 0
+ ypos 140
+}
+Blur {
+ inputs 0
+ name Blur1
+ channels alpha
+ xpos 0
+ ypos 180
+}
+`);
+  expect(nodeNamed(scene.nodes, "grade_group").labelLines).toEqual(["grade_group", "0.4"]);
+  expect(nodeNamed(scene.nodes, "Dot1").labelLines).toEqual(["corner"]);
+  expect(nodeNamed(scene.nodes, "BackdropNode1").labelLines).toEqual(["Plate"]);
+  expect(nodeNamed(scene.nodes, "BackdropNode1").textColor).toEqual([1, 0, 0, 1]);
+  expect(nodeNamed(scene.nodes, "FrameHold1").labelLines).toEqual(["FrameHold1", "(frame 1080)"]);
+  expect(nodeNamed(scene.nodes, "Blur1").labelLines).toEqual(["Blur1", "(alpha)"]);
 });
 
 test("disable, hide input, and postage stamps change the body", () => {

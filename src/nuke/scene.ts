@@ -1,5 +1,6 @@
 import type { ParsedScript, RawNode } from "./types.ts";
 import { classColor, parseTileColor, textColorFor } from "./colors.ts";
+import { labelLines } from "./labels.ts";
 import { nodeShape, type NodeShape } from "./shapes.ts";
 
 export type Rgba = [number, number, number, number];
@@ -146,10 +147,10 @@ function linkArrows(nodes: readonly DagNode[]): LinkArrow[] {
 
 function buildNode(raw: RawNode, measure: MeasureText): DagNode {
   const kind = kindOf(raw.className);
-  const labelLines = linesFor(raw, kind);
+  const lines = labelLines(raw.className, raw.name, kind, raw.knobs);
   const postage = kind === "node" && truthy(raw.knobs.postage_stamp);
   const shape = kind === "node" ? nodeShape(raw.className) : "rect";
-  const sized = sizeOf(kind, shape, labelLines, measure, raw.knobs, postage);
+  const sized = sizeOf(kind, shape, lines, measure, raw.knobs, postage);
   const x = numberKnob(raw.knobs.xpos) ?? 0;
   const y = numberKnob(raw.knobs.ypos) ?? 0;
   const color = parseTileColor(raw.knobs.tile_color) ?? classColor(raw.className);
@@ -170,8 +171,8 @@ function buildNode(raw: RawNode, measure: MeasureText): DagNode {
     bodyY: y + sized.stamp,
     bodyH: sized.bodyH,
     color,
-    textColor: textColorFor(color),
-    labelLines,
+    textColor: noteFontColor(raw.knobs.note_font_color) ?? textColorFor(color),
+    labelLines: lines,
     disabled: truthy(raw.knobs.disable),
     hideInput: truthy(raw.knobs.hide_input),
     postage,
@@ -257,32 +258,10 @@ function inheritedDotColor(node: DagNode, byId: Map<string, DagNode>, seen: Set<
   return upstream.color;
 }
 
-function linesFor(raw: RawNode, kind: DagNode["kind"]): string[] {
-  if (kind === "dot") return splitLines(raw.knobs.label);
-  if (kind === "backdrop" || kind === "sticky") {
-    return raw.knobs.label ? splitLines(raw.knobs.label) : [raw.name];
-  }
-  const lines = [raw.name, ...splitLines(raw.knobs.label)];
-  const extra = autoLabel(raw);
-  if (extra && !lines.includes(extra)) lines.push(extra);
-  return lines;
-}
-
-function autoLabel(raw: RawNode): string | null {
-  if (raw.className === "Read" || raw.className === "Write") {
-    const file = raw.knobs.file?.replaceAll('"', "");
-    if (!file) return null;
-    const base = file.split("/").filter((part) => part.length > 0).at(-1);
-    return base ?? null;
-  }
-  if (raw.className === "Merge2") return raw.knobs.operation || "over";
-  if (raw.className === "Blur" && raw.knobs.size && /^-?\d+(?:\.\d+)?$/.test(raw.knobs.size.trim())) {
-    return raw.knobs.size.trim();
-  }
-  if (raw.className === "Switch" && raw.knobs.which) return raw.knobs.which;
-  if (raw.className === "FrameHold" && raw.knobs.first_frame) return raw.knobs.first_frame;
-  if (raw.className === "TimeOffset" && raw.knobs.time_offset) return raw.knobs.time_offset;
-  return null;
+function noteFontColor(value: string | undefined): Rgba | null {
+  const color = parseTileColor(value);
+  if (!color || color[3] === 0) return null;
+  return [color[0], color[1], color[2], 1];
 }
 
 function sizeOf(
@@ -338,11 +317,6 @@ function kindOf(className: string): DagNode["kind"] {
   if (className === "BackdropNode") return "backdrop";
   if (className === "StickyNote") return "sticky";
   return "node";
-}
-
-function splitLines(value: string | undefined): string[] {
-  if (!value) return [];
-  return value.split("\n");
 }
 
 function numberKnob(value: string | undefined): number | null {

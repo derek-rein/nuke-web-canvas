@@ -460,17 +460,22 @@ function pushText(vertices: Vertex[], node: DagNode, atlas: GlyphLookup): void {
   const scale = fontSize / 48;
   const lineHeight = labelLineHeight(fontSize);
   const blockHeight = node.labelLines.length * lineHeight;
+  const dotLabel: [number, number, number, number] = [0.86, 0.86, 0.86, 1];
   const originY =
-    node.kind === "backdrop" || node.kind === "sticky"
-      ? node.y + LABEL_PAD
-      : node.bodyY + node.bodyH / 2 - blockHeight / 2;
+    node.kind === "dot"
+      ? node.y + node.h / 2 - blockHeight / 2
+      : node.kind === "backdrop" || node.kind === "sticky"
+        ? node.y + LABEL_PAD
+        : node.bodyY + node.bodyH / 2 - blockHeight / 2;
   node.labelLines.forEach((line, index) => {
     const glyphs = atlas.glyphsFor(line);
     const width = glyphs.reduce((sum, glyph) => sum + glyph.advance * scale, 0);
     let cursor =
-      node.kind === "backdrop" || node.kind === "sticky"
-        ? node.x + LABEL_PAD
-        : node.x + node.w / 2 - width / 2;
+      node.kind === "dot"
+        ? node.x + node.w + 6
+        : node.kind === "backdrop" || node.kind === "sticky"
+          ? node.x + LABEL_PAD
+          : node.x + node.w / 2 - width / 2;
     const baseline = originY + index * lineHeight + fontSize;
     for (const glyph of glyphs) {
       pushGlyph(
@@ -479,7 +484,7 @@ function pushText(vertices: Vertex[], node: DagNode, atlas: GlyphLookup): void {
         baseline - glyph.bearingY * scale,
         glyph.width * scale,
         glyph.height * scale,
-        node.textColor,
+        node.kind === "dot" ? dotLabel : node.textColor,
         glyph,
       );
       cursor += glyph.advance * scale;
