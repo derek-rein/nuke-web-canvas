@@ -128,6 +128,38 @@ Read {
   expect(readMask).toBe(false);
 });
 
+test("a connected output does not also draw the loose output arrow", () => {
+  const scene = sceneOf(`
+Blur {
+ inputs 0
+ name Blur1
+ xpos 0
+ ypos 0
+}
+Grade {
+ name Grade1
+ xpos 0
+ ypos 80
+}
+`);
+  const vertices = buildGeometry(scene, 1, null, null).filter((vertex) => vertex.mode === 0);
+  const blur = scene.nodes.find((node) => node.name === "Blur1");
+  const grade = scene.nodes.find((node) => node.name === "Grade1");
+  expect(blur && grade).toBeTruthy();
+  const under = (node: NonNullable<typeof blur>) =>
+    vertices.some(
+      (vertex) =>
+        vertex.r === 0 &&
+        vertex.g === 0 &&
+        vertex.b === 0 &&
+        vertex.y > node.bodyY + node.bodyH + 2 &&
+        vertex.y < node.bodyY + node.bodyH + 12 &&
+        Math.abs(vertex.x - (node.x + node.w / 2)) < 6,
+    );
+  expect(under(blur!)).toBe(false);
+  expect(under(grade!)).toBe(true);
+});
+
 test("a dot becomes circle vertices", () => {
   const scene = sceneOf(`
 Dot {

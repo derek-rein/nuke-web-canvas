@@ -82,9 +82,10 @@ export function buildGeometry(
     }
   }
   pushLinks(vertices, scene);
+  const outputConnected = new Set(scene.pipes.map((pipe) => pipe.fromId));
   for (const node of scene.nodes) {
     if (node.kind === "backdrop" || node.kind === "sticky") continue;
-    pushNode(vertices, node);
+    pushNode(vertices, node, outputConnected.has(node.id));
     if (node.cloneOf && node.kind === "node") pushCloneBadge(vertices, node);
     if (node.disabled) pushCross(vertices, node);
     if (node.cloneOf && node.kind === "node" && atlas && zoom >= TEXT_ZOOM) pushCloneMark(vertices, node, atlas);
@@ -98,7 +99,7 @@ export function buildGeometry(
   return vertices;
 }
 
-function pushNode(vertices: Vertex[], node: DagNode): void {
+function pushNode(vertices: Vertex[], node: DagNode, outputConnected: boolean): void {
   if (node.kind === "dot") {
     pushQuad(vertices, node.x, node.y, node.w, node.h, node.color, MODE_CIRCLE, node.w / 2);
     return;
@@ -108,16 +109,18 @@ function pushNode(vertices: Vertex[], node: DagNode): void {
   }
   pushBody(vertices, node);
   pushChannels(vertices, node);
-  pushPorts(vertices, node);
+  pushPorts(vertices, node, outputConnected);
 }
 
 const PORT: [number, number, number, number] = [0, 0, 0, 1];
 
-function pushPorts(vertices: Vertex[], node: DagNode): void {
+function pushPorts(vertices: Vertex[], node: DagNode, outputConnected: boolean): void {
   if (node.kind !== "node" || node.className === "Viewer") return;
-  const centerX = node.x + node.w / 2;
-  const bottom = node.bodyY + node.bodyH;
-  pushArrow(vertices, { x: centerX, y: bottom - 1 }, { x: centerX, y: bottom + 8 }, PORT, 8, 4.5);
+  if (!outputConnected) {
+    const centerX = node.x + node.w / 2;
+    const bottom = node.bodyY + node.bodyH;
+    pushArrow(vertices, { x: centerX, y: bottom - 1 }, { x: centerX, y: bottom + 8 }, PORT, 8, 4.5);
+  }
   if (node.hideInput || maskIsConnected(node)) return;
   if (node.maskInputs <= 0 && !classHasMask(node.className)) return;
   const midY = node.bodyY + node.bodyH / 2;
