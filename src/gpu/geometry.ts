@@ -55,6 +55,7 @@ const TEXT_ZOOM = 0.28;
 const EXPRESSION_LINK: [number, number, number, number] = [0x71 / 255, 0xc9 / 255, 0x73 / 255, 1];
 const CLONE_LINK: [number, number, number, number] = [0xe8 / 255, 0x78 / 255, 0x30 / 255, 1];
 const PIPE_DOWN: [number, number, number, number] = [0xe6 / 255, 0xae / 255, 0x51 / 255, 1];
+const INPUT_LABEL: [number, number, number, number] = [0xfc / 255, 0xba / 255, 0x63 / 255, 1];
 const PIPE_OTHER: [number, number, number, number] = [0, 0, 0, 1];
 const CLONE_BADGE: [number, number, number, number] = [0xe0 / 255, 0x70 / 255, 0x20 / 255, 1];
 
@@ -227,17 +228,33 @@ function pushLinks(vertices: Vertex[], scene: DagScene): void {
     const from = { x: source.x + source.w / 2, y: source.bodyY + source.bodyH / 2 };
     const to = { x: target.x + target.w / 2, y: target.bodyY + target.bodyH / 2 };
     const color = link.kind === "expression" ? EXPRESSION_LINK : CLONE_LINK;
-    const rect = {
+    const targetRect = {
       left: target.x,
       top: target.bodyY,
       right: target.x + target.w,
       bottom: target.bodyY + target.bodyH,
     };
-    const edge = linkEdgePoint(to, from, rect);
+    if (link.kind === "clone") {
+      const sourceRect = {
+        left: source.x,
+        top: source.bodyY,
+        right: source.x + source.w,
+        bottom: source.bodyY + source.bodyH,
+      };
+      pushSegment(
+        vertices,
+        linkEdgePoint(from, to, sourceRect),
+        linkEdgePoint(to, from, targetRect),
+        LINK_SHAFT_WIDTH,
+        color,
+      );
+      continue;
+    }
+    const edge = linkEdgePoint(to, from, targetRect);
     const outward = unitPoint(edge.x - to.x, edge.y - to.y);
-    const tip = clearLinkHead(edge, outward, rect);
+    const tip = clearLinkHead(edge, outward, targetRect);
     const tail = { x: tip.x + outward.x * LINK_HEAD_LENGTH, y: tip.y + outward.y * LINK_HEAD_LENGTH };
-    pushSegment(vertices, from, linkShaftEnd(tip, outward, edge, rect), LINK_SHAFT_WIDTH, color);
+    pushSegment(vertices, from, linkShaftEnd(tip, outward, edge, targetRect), LINK_SHAFT_WIDTH, color);
     pushArrow(vertices, tail, tip, color, LINK_HEAD_LENGTH, LINK_HEAD_HALF);
   }
 }
@@ -420,17 +437,15 @@ function pushPipeLabel(vertices: Vertex[], pipe: Pipe, atlas: GlyphLookup): void
     x = pipe.to.x - width / 2;
     centerY = pipe.to.y - 16;
   } else if (pipe.to.side === "right") {
-    x = pipe.to.x + 8;
+    x = pipe.to.x + 6;
     centerY = pipe.to.y - 12;
   } else if (pipe.to.side === "left") {
-    x = pipe.to.x - width - 8;
+    x = pipe.to.x - width - 6;
     centerY = pipe.to.y - 12;
   } else {
     return;
   }
-  const plateH = fontSize + 4;
-  pushRoundRect(vertices, x - 3, centerY - plateH / 2, width + 6, plateH, [0.07, 0.07, 0.07, 1], 2);
-  pushCenteredGlyphs(vertices, pipe.label, x, centerY, fontSize, [0.95, 0.95, 0.95, 1], atlas);
+  pushCenteredGlyphs(vertices, pipe.label, x, centerY, fontSize, INPUT_LABEL, atlas);
 }
 
 function pushChannels(vertices: Vertex[], node: DagNode): void {

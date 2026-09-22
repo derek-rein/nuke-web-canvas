@@ -207,13 +207,55 @@ function pipesFor(node: DagNode, byId: Map<string, DagNode>): Pipe[] {
   return pipes;
 }
 
+// Classes whose own input_label() is B, then A, then A2, A3... (Nuke 17 Merge2).
+const MERGE_ARROW_LABELS = new Set(["Merge2", "DeepMerge", "DeepMerge2", "GeoMerge"]);
+
+// input_label() prints the input index. Dissolve and ParticleMerge are 0-based.
+const INDEX_ARROW_LABELS = new Set(["Dissolve", "ParticleMerge"]);
+
+// Op::input_label numbers every arrow when maximum_inputs() is at least 3,
+// including a node that only has one or two of those inputs connected.
+const NUMBERED_ARROW_LABELS = new Set([
+  "Blend",
+  "ContactSheet",
+  "DeepFromImage",
+  "GridWarpTracker",
+  "MergeGeo",
+  "ModelBuilder",
+  "Primatte",
+  "Scene",
+  "Switch",
+  "ZComp",
+  "ZMerge",
+]);
+
 function pipeLabel(node: DagNode, index: number): string {
   const mainCount = node.inputs.length - node.maskInputs;
-  if (index >= mainCount) return "mask";
-  if (mainCount <= 1) return "";
-  if (index === 0) return "B";
-  if (index === 1) return "A";
-  return `A${index}`;
+  if (node.maskInputs > 0 && index >= mainCount) return "mask";
+  if (node.className === "Keymix") {
+    if (index === 0) return "B";
+    if (index === 1) return "A";
+    return "mask";
+  }
+  if (node.className === "ScanlineRender") {
+    return ["bg", "obj/scn", "cam"][index] ?? "";
+  }
+  if (MERGE_ARROW_LABELS.has(node.className)) {
+    if (index === 0) return "B";
+    if (index === 1 && mainCount < 3) return "A";
+    return `A${index}`;
+  }
+  if (INDEX_ARROW_LABELS.has(node.className)) return String(index);
+
+  // Default Op::input_label: blank below 2 inputs, B/A at exactly 2, else index + 1.
+  const counted = NUMBERED_ARROW_LABELS.has(node.className) ? Math.max(mainCount, 3) : mainCount;
+  if (counted < 2) return "";
+  if (counted === 2) {
+    if (index === 0) return "B";
+    if (index === 1) return "A";
+    return "";
+  }
+  return String(index + 1);
 }
 
 function outputAnchor(node: DagNode): Anchor {

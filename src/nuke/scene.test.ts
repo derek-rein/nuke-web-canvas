@@ -105,8 +105,10 @@ Merge2 {
 `);
   const merge = nodeNamed(scene.nodes, "Merge1");
   const pipes = scene.pipes.filter((pipe) => pipe.toId === merge.id).sort((a, b) => a.inputIndex - b.inputIndex);
+  expect(pipes).toHaveLength(2);
   expect(pipes[0]?.label).toBe("B");
   expect(pipes[1]?.label).toBe("A");
+  expect(pipes.some((pipe) => pipe.label === "mask")).toBe(false);
   expect(pipes[0]!.to.x).toBeGreaterThan(pipes[1]!.to.x);
   expect(pipes[0]?.to.side).toBe("top");
   expect(pipes[1]?.to.side).toBe("top");
@@ -165,6 +167,140 @@ Merge2 {
   expect(mask?.label).toBe("mask");
   expect(mask?.to.side).toBe("right");
   expect(mask?.to.x).toBe(merge.x + merge.w);
+});
+
+test("a merge with extra inputs labels them B, A1, A2", () => {
+  const scene = sceneOf(`
+Constant {
+ inputs 0
+ name C0
+ xpos 0
+ ypos 0
+}
+Constant {
+ inputs 0
+ name C1
+ xpos 80
+ ypos 0
+}
+Constant {
+ inputs 0
+ name C2
+ xpos 160
+ ypos 0
+}
+Constant {
+ inputs 0
+ name C3
+ xpos 240
+ ypos 0
+}
+Merge2 {
+ inputs 3+1
+ name Merge1
+ xpos 80
+ ypos 80
+}
+`);
+  const merge = nodeNamed(scene.nodes, "Merge1");
+  const labels = scene.pipes
+    .filter((pipe) => pipe.toId === merge.id)
+    .sort((a, b) => a.inputIndex - b.inputIndex)
+    .map((pipe) => pipe.label);
+  expect(labels).toEqual(["B", "A1", "A2", "mask"]);
+});
+
+test("one image input stays blank and a connected mask says mask", () => {
+  const scene = sceneOf(`
+Constant {
+ inputs 0
+ name C0
+ xpos 0
+ ypos 0
+}
+Constant {
+ inputs 0
+ name C1
+ xpos 100
+ ypos 0
+}
+Grade {
+ inputs 1+1
+ name Grade1
+ xpos 40
+ ypos 80
+}
+`);
+  const grade = nodeNamed(scene.nodes, "Grade1");
+  const labels = scene.pipes
+    .filter((pipe) => pipe.toId === grade.id)
+    .sort((a, b) => a.inputIndex - b.inputIndex)
+    .map((pipe) => pipe.label);
+  expect(labels).toEqual(["", "mask"]);
+});
+
+test("contact sheet arrows are numbered even when only two are connected", () => {
+  const scene = sceneOf(`
+Constant {
+ inputs 0
+ name C0
+ xpos 0
+ ypos 0
+}
+Constant {
+ inputs 0
+ name C1
+ xpos 80
+ ypos 0
+}
+ContactSheet {
+ inputs 2
+ name Sheet1
+ xpos 20
+ ypos 80
+}
+`);
+  const sheet = nodeNamed(scene.nodes, "Sheet1");
+  const labels = scene.pipes
+    .filter((pipe) => pipe.toId === sheet.id)
+    .sort((a, b) => a.inputIndex - b.inputIndex)
+    .map((pipe) => pipe.label);
+  expect(labels).toEqual(["1", "2"]);
+});
+
+test("scanline render names its inputs instead of numbering them", () => {
+  const scene = sceneOf(`
+Constant {
+ inputs 0
+ name C0
+ xpos 0
+ ypos 0
+}
+Constant {
+ inputs 0
+ name C1
+ xpos 80
+ ypos 0
+}
+Constant {
+ inputs 0
+ name C2
+ xpos 160
+ ypos 0
+}
+ScanlineRender {
+ inputs 3
+ name Render1
+ xpos 40
+ ypos 80
+}
+`);
+  const render = nodeNamed(scene.nodes, "Render1");
+  const labels = scene.pipes
+    .filter((pipe) => pipe.toId === render.id)
+    .sort((a, b) => a.inputIndex - b.inputIndex)
+    .map((pipe) => pipe.label);
+  expect(labels).toEqual(["bg", "obj/scn", "cam"]);
 });
 
 test("pills and deep nodes use the same bar width as a 2D node", () => {

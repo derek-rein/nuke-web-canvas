@@ -309,10 +309,29 @@ Merge2 {
         Math.abs(vertex.x - (pipe!.to.x + dx)) < 18 && Math.abs(vertex.y - (pipe!.to.y + dy)) < 16,
     );
   };
-  const glyphs = buildGeometry(scene, 1, atlas, null).filter((vertex) => vertex.mode === 3);
+  const geometry = buildGeometry(scene, 1, atlas, null);
+  const glyphs = geometry.filter((vertex) => vertex.mode === 3);
   expect(beside("B", 0, -12)).toBe(true);
   expect(beside("A", 0, -12)).toBe(true);
   expect(beside("mask", 12, 0)).toBe(true);
+  const letters = glyphs.filter((vertex) =>
+    pipes.some(
+      (pipe) =>
+        pipe.label !== "" &&
+        Math.abs(vertex.x - pipe.to.x) < 30 &&
+        Math.abs(vertex.y - (pipe.to.y - (pipe.to.side === "top" ? 16 : 12))) < 12,
+    ),
+  );
+  expect(letters.length).toBeGreaterThan(0);
+  for (const vertex of letters) {
+    expect(vertex.r).toBeCloseTo(0xfc / 255, 2);
+    expect(vertex.g).toBeCloseTo(0xba / 255, 2);
+    expect(vertex.b).toBeCloseTo(0x63 / 255, 2);
+  }
+  const plate = geometry.some(
+    (vertex) => vertex.mode === 1 && vertex.y < merge!.bodyY && vertex.r < 0.2 && vertex.g < 0.2 && vertex.b < 0.2,
+  );
+  expect(plate).toBe(false);
 });
 
 test("an expression link head sits outside the destination body", () => {
@@ -391,6 +410,42 @@ clone $Ng {
   expect(expression).toBeTruthy();
   const cloneLink = vertices.find((vertex) => Math.abs(vertex.r - 0xe8 / 255) <= 0.01);
   expect(cloneLink).toBeTruthy();
+});
+
+test("a clone connection is a line with no arrow head", () => {
+  const scene = sceneOf(`
+Grade {
+ inputs 0
+ name Grade1
+ xpos 0
+ ypos 0
+}
+set Ng [stack 0]
+clone $Ng {
+ inputs 0
+ name Grade1Clone
+ xpos 160
+ ypos 0
+}
+`);
+  const source = scene.nodes.find((node) => node.name === "Grade1");
+  const clone = scene.nodes.find((node) => node.name === "Grade1Clone");
+  expect(source).toBeTruthy();
+  expect(clone).toBeTruthy();
+  const orange = buildGeometry(scene, 1, null, null).filter(
+    (vertex) => Math.abs(vertex.r - 0xe8 / 255) <= 0.01 && Math.abs(vertex.g - 0x78 / 255) <= 0.01,
+  );
+  expect(orange.length).toBeGreaterThan(0);
+  const x0 = source!.x + source!.w;
+  const x1 = clone!.x;
+  const y = source!.bodyY + source!.bodyH / 2;
+  for (const vertex of orange) {
+    expect(vertex.x).toBeGreaterThanOrEqual(x0 - 1);
+    expect(vertex.x).toBeLessThanOrEqual(x1 + 1);
+    expect(Math.abs(vertex.y - y)).toBeLessThanOrEqual(1);
+  }
+  expect(Math.min(...orange.map((vertex) => vertex.x))).toBeLessThan(x0 + 2);
+  expect(Math.max(...orange.map((vertex) => vertex.x))).toBeGreaterThan(x1 - 2);
 });
 
 test("a clone mark sits on the left and the name stays on the node", () => {
