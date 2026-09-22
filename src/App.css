@@ -11,7 +11,68 @@ body {
   height: 100vh;
 }
 
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  background: #2a2a2a;
+}
+
+.toolbar button,
+.file {
+  font: 12px Verdana, sans-serif;
+  color: #eee;
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 3px;
+  padding: 4px 8px;
+}
+
+.file input {
+  display: none;
+}
+
+.workspace {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
 .canvas {
   flex: 1;
+  min-width: 0;
   min-height: 0;
+}
+
+.inspector {
+  width: 280px;
+  overflow: auto;
+  border-left: 1px solid #333;
+  padding: 12px;
+  font-size: 12px;
+}
+
+.inspector h1 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.inspector p {
+  margin: 0 0 12px;
+  color: #aaa;
+}
+
+.inspector dl {
+  margin: 0;
+}
+
+.inspector dt {
+  color: #888;
+}
+
+.inspector dd {
+  margin: 0 0 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

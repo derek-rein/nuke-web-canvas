@@ -75,7 +75,7 @@ class Scanner {
       this.skip();
       if (this.peek() === "}") {
         this.i += 1;
-        break;
+        return knobs;
       }
       if (this.eof()) break;
       const key = this.readIdent();
@@ -86,7 +86,7 @@ class Scanner {
       this.skipHorizontal();
       knobs[key] = this.readValue();
     }
-    return knobs;
+    throw new Error("Unclosed brace in Nuke script");
   }
 
   private atLineStart(): boolean {
