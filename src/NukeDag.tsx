@@ -42,7 +42,12 @@ export function NukeDag(props: {
     const canvas = canvasRef.current;
     if (!canvas || parsed.error) return;
     let cancelled = false;
-    const rendererPromise = createNukeRenderer(canvas);
+    const rendererPromise = createNukeRenderer(canvas, {
+      onError: (message) => {
+        setGpuError(message);
+        setGpuState("error");
+      },
+    });
     rendererPromise.then(
       (renderer) => {
         if (cancelled) {

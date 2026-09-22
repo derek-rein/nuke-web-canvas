@@ -28,9 +28,16 @@ const CameraSchema = d.struct({
   viewport: d.vec2f,
 });
 
-export async function createNukeRenderer(canvas: HTMLCanvasElement): Promise<NukeRenderer> {
+export async function createNukeRenderer(
+  canvas: HTMLCanvasElement,
+  hooks?: { onError?: (message: string) => void },
+): Promise<NukeRenderer> {
   if (!navigator.gpu) throw new Error("WebGPU is not available");
   const root = await tgpu.init();
+  root.device.addEventListener("uncapturederror", (event) => {
+    const error = (event as GPUUncapturedErrorEvent).error;
+    hooks?.onError?.(error.message);
+  });
   const context = root.configureContext({ canvas, alphaMode: "premultiplied" });
   const cameraBuffer = root
     .createBuffer(CameraSchema, {
@@ -56,19 +63,20 @@ export async function createNukeRenderer(canvas: HTMLCanvasElement): Promise<Nuk
   let selectedId: string | null = null;
   let dpr = 1;
   let geometryKey = "";
-  let vertexCount = 0;
-  let liveBuffer: { destroy(): void } | null = null;
-  let drawPipeline: { draw(vertexCount: number): void } | null = null;
+  let shapeCount = 0;
+  let glyphCount = 0;
+  const liveBuffers: Array<{ destroy(): void }> = [];
+  let drawFrame: (() => void) | null = null;
 
-  function rebuild(vertices: Vertex[]): void {
-    const count = Math.max(vertices.length, 1);
-    const schema = d.arrayOf(GpuVertex, count);
-    const data = vertices.length > 0 ? vertices.map(toGpuVertex) : [toGpuVertex(emptyVertex())];
-    liveBuffer?.destroy();
-    const buffer = root.createBuffer(schema, data).$usage("storage");
-    liveBuffer = buffer;
-    const stored = buffer.as("readonly");
-    const vertexMain = tgpu.vertexFn({
+  function storeOf(vertices: Vertex[]) {
+    if (vertices.length === 0) return null;
+    const buffer = root.createBuffer(d.arrayOf(GpuVertex, vertices.length), vertices.map(toGpuVertex)).$usage("storage");
+    liveBuffers.push(buffer);
+    return buffer.as("readonly");
+  }
+
+  function vertexStage(stored: NonNullable<ReturnType<typeof storeOf>>) {
+    return tgpu.vertexFn({
       in: { vertexIndex: d.builtin.vertexIndex },
       out: {
         position: d.builtin.position,
@@ -96,64 +104,75 @@ export async function createNukeRenderer(canvas: HTMLCanvasElement): Promise<Nuk
         halfY: vert.params.w,
       };
     });
-    const fragmentMain = tgpu.fragmentFn({
-      in: {
-        color: d.vec4f,
-        uv: d.vec2f,
-        mode: d.f32,
-        radius: d.f32,
-        halfX: d.f32,
-        halfY: d.f32,
-      },
+  }
+
+  function glyphFragment() {
+    return tgpu.fragmentFn({
+      in: { color: d.vec4f, uv: d.vec2f },
       out: d.vec4f,
     })((input) => {
       "use gpu";
-      if (input.mode < 0.5) return input.color;
-      if (input.mode < 1.5) {
-        const dist = roundRectDistance(input.uv.x, input.uv.y, input.halfX, input.halfY, input.radius);
-        const aa = std.fwidth(dist);
-        const alpha = 1 - std.smoothstep(0 - aa, aa, dist);
-        return d.vec4f(input.color.x, input.color.y, input.color.z, input.color.w * alpha);
-      }
-      if (input.mode < 2.5) {
-        const dist = std.sqrt(input.uv.x * input.uv.x + input.uv.y * input.uv.y) - input.radius;
-        const aa = std.fwidth(dist);
-        const alpha = 1 - std.smoothstep(0 - aa, aa, dist);
-        return d.vec4f(input.color.x, input.color.y, input.color.z, input.color.w * alpha);
-      }
       const texel = std.textureSample(atlasView.$, sampler.$, input.uv);
       return d.vec4f(input.color.x, input.color.y, input.color.z, input.color.w * texel.w);
     });
-    const pipeline = root.createRenderPipeline({
-      vertex: vertexMain,
-      fragment: fragmentMain,
-      primitive: { topology: "triangle-list" },
-      targets: {
-        blend: {
-          color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
-          alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
-        },
+  }
+
+  function rebuild(vertices: Vertex[]): void {
+    for (const buffer of liveBuffers) buffer.destroy();
+    liveBuffers.length = 0;
+    const shapes = vertices.filter((vertex) => vertex.mode !== 3);
+    const glyphs = vertices.filter((vertex) => vertex.mode === 3);
+    const shapeStore = storeOf(shapes);
+    const glyphStore = storeOf(glyphs);
+    const targets = {
+      blend: {
+        color: { srcFactor: "src-alpha" as const, dstFactor: "one-minus-src-alpha" as const, operation: "add" as const },
+        alpha: { srcFactor: "one" as const, dstFactor: "one-minus-src-alpha" as const, operation: "add" as const },
       },
-    });
-    vertexCount = vertices.length;
-    drawPipeline = {
-      draw(countToDraw: number) {
-        pipeline
-          .withColorAttachment({
-            view: context,
-            clearValue: [0.11, 0.11, 0.11, 1],
-            loadOp: "clear",
-            storeOp: "store",
-          })
-          .draw(countToDraw);
-      },
+    };
+    const shapePipeline = shapeStore
+      ? root.createRenderPipeline({
+          vertex: vertexStage(shapeStore),
+          fragment: shapeFragment(),
+          primitive: { topology: "triangle-list" },
+          targets,
+        })
+      : null;
+    const glyphPipeline = glyphStore
+      ? root.createRenderPipeline({
+          vertex: vertexStage(glyphStore),
+          fragment: glyphFragment(),
+          primitive: { topology: "triangle-list" },
+          targets,
+        })
+      : null;
+    shapeCount = shapes.length;
+    glyphCount = glyphs.length;
+    drawFrame = () => {
+      shapePipeline
+        ?.withColorAttachment({
+          view: context,
+          clearValue: [0.11, 0.11, 0.11, 1],
+          loadOp: "clear",
+          storeOp: "store",
+        })
+        .draw(shapeCount);
+      if (!glyphPipeline || glyphCount === 0) return;
+      glyphPipeline
+        .withColorAttachment({
+          view: context,
+          clearValue: [0.11, 0.11, 0.11, 1],
+          loadOp: shapePipeline ? "load" : "clear",
+          storeOp: "store",
+        })
+        .draw(glyphCount);
     };
   }
 
   function ensureGeometry(): void {
     if (!scene) return;
     const key = `${scene.id}:${camera.zoom.toFixed(3)}:${selectedId ?? ""}`;
-    if (key === geometryKey && drawPipeline) return;
+    if (key === geometryKey && drawFrame) return;
     const vertices = buildGeometry(scene, camera.zoom, atlas, selectedId);
     if (atlas.dirty.value) {
       atlasTexture.write(atlas.canvas);
@@ -191,12 +210,35 @@ export async function createNukeRenderer(canvas: HTMLCanvasElement): Promise<Nuk
         pad: 0,
         viewport: d.vec2f(canvas.width, canvas.height),
       });
-      drawPipeline?.draw(vertexCount);
+      drawFrame?.();
     },
     destroy() {
       root.destroy();
     },
   };
+}
+
+function shapeFragment() {
+  return tgpu.fragmentFn({
+    in: {
+      color: d.vec4f,
+      uv: d.vec2f,
+      mode: d.f32,
+      radius: d.f32,
+      halfX: d.f32,
+      halfY: d.f32,
+    },
+    out: d.vec4f,
+  })((input) => {
+    "use gpu";
+    const rectDist = roundRectDistance(input.uv.x, input.uv.y, input.halfX, input.halfY, input.radius);
+    const circleDist = std.sqrt(input.uv.x * input.uv.x + input.uv.y * input.uv.y) - input.radius;
+    const dist = std.select(circleDist, rectDist, input.mode < 1.5);
+    const aa = std.fwidth(dist);
+    const coverage = 1 - std.smoothstep(0 - aa, aa, dist);
+    const alpha = std.select(input.color.w * coverage, input.color.w, input.mode < 0.5);
+    return d.vec4f(input.color.x, input.color.y, input.color.z, alpha);
+  });
 }
 
 function roundRectDistance(px: number, py: number, halfX: number, halfY: number, radius: number): number {
@@ -217,6 +259,4 @@ function toGpuVertex(vertex: Vertex) {
   };
 }
 
-function emptyVertex(): Vertex {
-  return { x: 0, y: 0, r: 0, g: 0, b: 0, a: 0, u: 0, v: 0, mode: 0, radius: 0 };
-}
+
