@@ -35,7 +35,7 @@ Grade {
   expect(grade.y).toBe(20);
 });
 
-test("extra label lines grow the body and a long line grows the width", () => {
+test("extra label lines spill and the body stays a fixed tile", () => {
   const grade = nodeNamed(
     sceneOf(`
 Grade {
@@ -49,9 +49,28 @@ Grade {
     "Grade1",
   );
   expect(grade.labelLines).toEqual(["Grade1", "abcdefghijkl", "second"]);
-  expect(grade.bodyH).toBe(18 + 24);
-  expect(grade.w).toBe(Math.ceil(12 * 6 + 16));
-  expect(grade.w).toBeGreaterThan(80);
+  expect(grade.bodyH).toBe(18);
+  expect(grade.h).toBe(18);
+  expect(grade.w).toBe(80);
+});
+
+test("a long label does not resize a circle node", () => {
+  const camera = nodeNamed(
+    sceneOf(`
+Camera3 {
+ inputs 0
+ name Camera1
+ label "a very long camera label that would have widened the disk"
+ xpos 0
+ ypos 0
+}
+`).nodes,
+    "Camera1",
+  );
+  expect(camera.shape).toBe("circle");
+  expect(camera.w).toBe(52);
+  expect(camera.bodyH).toBe(52);
+  expect(camera.h).toBe(52);
 });
 
 test("dots are 12 by 12 and anchors meet at the center", () => {
@@ -197,8 +216,14 @@ Grade {
   expect(pipe?.to).toEqual({ x: grade.x + grade.w / 2, y: grade.bodyY, side: "top" });
 });
 
-test("the mask input sits on the right edge", () => {
+test("a mask source level with the node meets the right edge", () => {
   const scene = sceneOf(`
+Constant {
+ inputs 0
+ name C2
+ xpos 220
+ ypos 71
+}
 Constant {
  inputs 0
  name C0
@@ -209,12 +234,6 @@ Constant {
  inputs 0
  name C1
  xpos 100
- ypos 0
-}
-Constant {
- inputs 0
- name C2
- xpos 200
  ypos 0
 }
 Merge2 {
@@ -229,6 +248,35 @@ Merge2 {
   expect(mask?.label).toBe("mask");
   expect(mask?.to.side).toBe("right");
   expect(mask?.to.x).toBe(merge.x + merge.w);
+});
+
+test("a connected arrow aims at the node center and stops on the outline", () => {
+  const scene = sceneOf(`
+Constant {
+ inputs 0
+ name Constant1
+ xpos -160
+ ypos 0
+}
+Blur {
+ name Blur1
+ xpos 0
+ ypos 40
+}
+`);
+  const blur = nodeNamed(scene.nodes, "Blur1");
+  const pipe = scene.pipes.find((item) => item.toId === blur.id);
+  expect(pipe).toBeTruthy();
+  const center = { x: blur.x + blur.w / 2, y: blur.bodyY + blur.bodyH / 2 };
+  const dx = center.x - pipe!.from.x;
+  const dy = center.y - pipe!.from.y;
+  const tx = pipe!.to.x - pipe!.from.x;
+  const ty = pipe!.to.y - pipe!.from.y;
+  const scale = Math.hypot(dx, dy) * Math.hypot(tx, ty);
+  expect(Math.abs(dx * ty - dy * tx) / scale).toBeLessThan(1e-6);
+  expect(pipe!.to.side).toBe("left");
+  expect(pipe!.to.x).toBe(blur.x);
+  expect(pipe!.to).not.toEqual({ x: center.x, y: blur.bodyY, side: "top" });
 });
 
 test("a merge with extra inputs labels them B, A1, A2", () => {
@@ -552,8 +600,10 @@ Grade {
   expect(scene.pipes.some((pipe) => pipe.toId === grade.id)).toBe(false);
   const stamped = nodeNamed(scene.nodes, "Grade2");
   const pipe = scene.pipes.find((item) => item.toId === stamped.id);
-  expect(pipe?.to.y).toBe(stamped.bodyY);
-  expect(pipe?.to.y).not.toBe(stamped.y);
+  expect(pipe).toBeTruthy();
+  expect(pipe!.to.y).toBeGreaterThanOrEqual(stamped.bodyY);
+  expect(pipe!.to.y).toBeLessThanOrEqual(stamped.bodyY + stamped.bodyH);
+  expect(pipe!.to.y).not.toBe(stamped.y);
 });
 
 test("sticky notes grow with note_font_size so the text fits", () => {
@@ -580,7 +630,7 @@ StickyNote {
   expect(fitted.h).toBeGreaterThanOrEqual(Math.ceil(8 + 2 * font * 1.15 + 8));
 });
 
-test("a clone leaves room beside its name for the clone mark", () => {
+test("a clone keeps the fixed tile when its name is long", () => {
   const scene = sceneOf(`
 Grade {
  inputs 0
@@ -598,7 +648,8 @@ clone $Ng {
 `);
   const clone = nodeNamed(scene.nodes, "Grade1Clone");
   expect(clone.cloneOf).toBeTruthy();
-  expect(clone.w).toBe(Math.ceil("Grade1Clone".length * 6 + 16));
+  expect(clone.w).toBe(80);
+  expect(clone.bodyH).toBe(18);
 });
 
 test("expressions and clones become straight link arrows", () => {
@@ -634,7 +685,7 @@ clone $Ng {
     { fromId: nodeNamed(scene.nodes, "Grade1").id, toId: nodeNamed(scene.nodes, "Grade1Clone").id, kind: "clone" },
   ]);
   const clone = nodeNamed(scene.nodes, "Grade1Clone");
-  expect(clone.w).toBe(Math.ceil("Grade1Clone".length * 6 + 16));
+  expect(clone.w).toBe(80);
 });
 
 test("parent and self names are not expression links", () => {

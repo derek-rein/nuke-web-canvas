@@ -121,7 +121,14 @@ Read {
   const below = vertices.some(
     (vertex) => vertex.y > blur!.bodyY + blur!.bodyH && Math.abs(vertex.x - (blur!.x + blur!.w / 2)) < 8,
   );
-  const maskTab = vertices.some((vertex) => vertex.x > blur!.x + blur!.w && Math.abs(vertex.y - (blur!.bodyY + blur!.bodyH / 2)) < 8);
+  const maskTab = vertices.some(
+    (vertex) =>
+      vertex.r === 0 &&
+      vertex.g === 0 &&
+      vertex.b === 0 &&
+      vertex.x > blur!.x + blur!.w &&
+      Math.abs(vertex.y - (blur!.bodyY + blur!.bodyH / 2)) < 8,
+  );
   const readMask = vertices.some((vertex) => vertex.x > read!.x + read!.w && vertex.y >= read!.bodyY && vertex.y <= read!.bodyY + read!.bodyH);
   expect(below).toBe(true);
   expect(maskTab).toBe(true);
@@ -275,14 +282,14 @@ Constant {
 Viewer {
  name Viewer1
  xpos 160
- ypos 0
+ ypos 9
 }
 `);
   const viewer = scene.nodes.find((node) => node.name === "Viewer1");
   const constant = scene.nodes.find((node) => node.name === "Constant1");
   expect(viewer).toBeTruthy();
   expect(constant).toBeTruthy();
-  const y = constant!.bodyY + constant!.bodyH / 2;
+  const y = constant!.bodyY + constant!.bodyH;
   const xs = buildGeometry(scene, 1, null, null)
     .filter(
       (vertex) =>
@@ -415,6 +422,12 @@ test("merge inputs are labeled outside the node", () => {
   const scene = sceneOf(`
 Constant {
  inputs 0
+ name C2
+ xpos 220
+ ypos 71
+}
+Constant {
+ inputs 0
  name C0
  xpos 0
  ypos 0
@@ -423,12 +436,6 @@ Constant {
  inputs 0
  name C1
  xpos 100
- ypos 0
-}
-Constant {
- inputs 0
- name C2
- xpos 200
  ypos 0
 }
 Merge2 {
@@ -620,6 +627,83 @@ clone $Ng {
   expect(mark.length).toBeGreaterThan(0);
   expect(name.length).toBeGreaterThan(0);
   expect(name.every((vertex) => vertex.x >= clone!.x)).toBe(true);
+});
+
+test("a long label spills past the fixed tile and selection backs that text", () => {
+  const scene = sceneOf(`
+Blur {
+ inputs 0
+ name Blur3
+ label "0 px adsf adsf adsf adsf adsf asdf asdf"
+ xpos 0
+ ypos 0
+}
+`);
+  const blur = scene.nodes.find((node) => node.name === "Blur3");
+  expect(blur).toBeTruthy();
+  expect(blur!.w).toBe(80);
+  expect(blur!.bodyH).toBe(18);
+  const source = 48;
+  const font = 11;
+  const dagAtlas: GlyphLookup = {
+    measure: (line) => line.length * 6,
+    glyphsFor: (line) =>
+      [...line].map((char) => {
+        const advance = (6 * source) / font;
+        return {
+          char,
+          advance,
+          width: advance,
+          height: (11 * source) / font,
+          bearingX: 0,
+          bearingY: (11 * source) / font,
+          u0: 0,
+          v0: 0,
+          u1: 1,
+          v1: 1,
+        };
+      }),
+  };
+  const glyphs = buildGeometry(scene, 1, dagAtlas, null).filter((vertex) => vertex.mode === 3);
+  expect(Math.min(...glyphs.map((vertex) => vertex.x))).toBeLessThan(blur!.x);
+  expect(Math.max(...glyphs.map((vertex) => vertex.x))).toBeGreaterThan(blur!.x + blur!.w);
+  expect(Math.min(...glyphs.map((vertex) => vertex.y))).toBeLessThan(blur!.bodyY);
+  expect(Math.max(...glyphs.map((vertex) => vertex.y))).toBeGreaterThan(blur!.bodyY + blur!.bodyH);
+  const plain = buildGeometry(scene, 1, dagAtlas, null);
+  expect(plain.some((vertex) => vertex.a === 0.6)).toBe(false);
+  const selected = buildGeometry(scene, 1, dagAtlas, new Set([blur!.id]));
+  const backing = selected.filter((vertex) => vertex.a === 0.6);
+  expect(backing.length).toBeGreaterThan(0);
+  expect(Math.min(...backing.map((vertex) => vertex.x))).toBeLessThan(blur!.x);
+  expect(Math.max(...backing.map((vertex) => vertex.x))).toBeGreaterThan(blur!.x + blur!.w);
+  expect(backing.every((vertex) => vertex.r === blur!.color[0] && vertex.g === blur!.color[1])).toBe(true);
+});
+
+test("a selected dot keeps the gray sphere and gains an orange center", () => {
+  const scene = sceneOf(`
+Dot {
+ name Dot1
+ xpos 0
+ ypos 0
+}
+`);
+  const dot = scene.nodes.find((node) => node.name === "Dot1");
+  expect(dot).toBeTruthy();
+  const gold = (vertex: { r: number; g: number; b: number }) =>
+    Math.abs(vertex.r - 0xfc / 255) < 0.02 &&
+    Math.abs(vertex.g - 0xba / 255) < 0.02 &&
+    Math.abs(vertex.b - 0x63 / 255) < 0.02;
+  const outline = (vertex: { r: number; g: number; b: number }) => vertex.r === 0.98 && vertex.g === 0.6 && vertex.b === 0;
+  expect(buildGeometry(scene, 1, null, null).some(gold)).toBe(false);
+  const selected = buildGeometry(scene, 1, null, new Set([dot!.id]));
+  const core = selected.filter((vertex) => gold(vertex) && vertex.mode === 2);
+  expect(core.length).toBeGreaterThan(0);
+  expect(
+    core.every(
+      (vertex) => vertex.x > dot!.x && vertex.x < dot!.x + dot!.w && vertex.y > dot!.y && vertex.y < dot!.y + dot!.h,
+    ),
+  ).toBe(true);
+  expect(selected.some(outline)).toBe(false);
 });
 
 test("selection outlines every selected id and skips the rest", () => {

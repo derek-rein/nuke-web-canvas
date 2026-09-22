@@ -89,7 +89,8 @@ export function buildGeometry(
   const outputConnected = connectedOutputs(scene);
   for (const node of scene.nodes) {
     if (node.kind === "backdrop" || node.kind === "sticky") continue;
-    pushNode(vertices, node, outputConnected.has(node.id));
+    if (selectedIds?.has(node.id) && atlas && zoom >= TEXT_ZOOM) pushLabelBacking(vertices, node, atlas);
+    pushNode(vertices, node, outputConnected.has(node.id), selectedIds?.has(node.id) ?? false);
     if (node.cloneOf && node.kind === "node") pushCloneBadge(vertices, node);
     if (node.disabled) pushCross(vertices, node);
     if (node.cloneOf && node.kind === "node" && atlas && zoom >= TEXT_ZOOM) pushCloneMark(vertices, node, atlas);
@@ -103,10 +104,25 @@ export function buildGeometry(
   return vertices;
 }
 
-function pushNode(vertices: Vertex[], node: DagNode, outputConnected: boolean): void {
+const DOT_SELECT: [number, number, number, number] = [0xfc / 255, 0xba / 255, 0x63 / 255, 1];
+
+function pushNode(vertices: Vertex[], node: DagNode, outputConnected: boolean, selected: boolean): void {
   if (node.kind === "dot") {
     const radius = node.w / 2 - 0.6;
     pushQuad(vertices, node.x, node.y, node.w, node.h, node.color, MODE_DOT, radius);
+    if (selected) {
+      const diameter = node.w * 0.64;
+      pushQuad(
+        vertices,
+        node.x + (node.w - diameter) / 2,
+        node.y + (node.h - diameter) / 2,
+        diameter,
+        diameter,
+        DOT_SELECT,
+        MODE_CIRCLE,
+        diameter / 2,
+      );
+    }
     if (!outputConnected) {
       const centerX = node.x + node.w / 2;
       const bottom = node.y + node.h;
@@ -135,7 +151,7 @@ function pushPorts(vertices: Vertex[], node: DagNode, outputConnected: boolean):
   if (node.maskInputs <= 0 && !classHasMask(node.className)) return;
   const midY = node.bodyY + node.bodyH / 2;
   const edge = node.x + node.w;
-  pushArrow(vertices, { x: edge + 7, y: midY }, { x: edge - 1, y: midY }, node.color, 7, 3.5);
+  pushArrow(vertices, { x: edge + 7, y: midY }, { x: edge - 1, y: midY }, PORT, 7, 3.5);
 }
 
 function maskIsConnected(node: DagNode): boolean {
@@ -525,7 +541,26 @@ function pushCross(vertices: Vertex[], node: DagNode): void {
   pushSegment(vertices, { x: x + w, y }, { x, y: y + h }, 1.5, color);
 }
 
+/** Tile color behind a selected autolabel. The label is often wider and taller than the tile. */
+function pushLabelBacking(vertices: Vertex[], node: DagNode, atlas: GlyphLookup): void {
+  if (node.kind !== "node" || node.labelLines.length === 0) return;
+  const fontSize = noteFontSize(node.kind, node.knobs);
+  const lineHeight = labelLineHeight(fontSize);
+  const blockHeight = node.labelLines.length * lineHeight;
+  let widest = 0;
+  for (const line of node.labelLines) widest = Math.max(widest, atlas.measure(line));
+  const pad = 2;
+  const w = widest + pad * 2;
+  const h = blockHeight + pad * 2;
+  if (w <= node.w && h <= node.bodyH) return;
+  const x = node.x + node.w / 2 - w / 2;
+  const y = node.bodyY + node.bodyH / 2 - h / 2;
+  const color: [number, number, number, number] = [node.color[0], node.color[1], node.color[2], 0.6];
+  pushQuad(vertices, x, y, w, h, color, MODE_SOLID, 0);
+}
+
 function pushSelection(vertices: Vertex[], node: DagNode): void {
+  if (node.kind === "dot") return;
   const color: [number, number, number, number] = [0.98, 0.6, 0, 1];
   const pad = 3;
   const x = node.x - pad;
@@ -554,6 +589,9 @@ function pushPipeLabel(vertices: Vertex[], pipe: Pipe, atlas: GlyphLookup): void
   } else if (pipe.to.side === "left") {
     x = pipe.to.x - width - 6;
     centerY = pipe.to.y - 12;
+  } else if (pipe.to.side === "bottom") {
+    x = pipe.to.x - width / 2;
+    centerY = pipe.to.y + 16;
   } else {
     return;
   }

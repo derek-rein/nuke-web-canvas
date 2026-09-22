@@ -256,7 +256,7 @@ function pipesFor(node: DagNode, byId: Map<string, DagNode>): Pipe[] {
       inputIndex,
       label: pipeLabel(node, inputIndex),
       from: outputAnchor(source),
-      to: inputAnchor(node, inputIndex),
+      to: inputAnchor(node, source),
     });
   });
   return pipes;
@@ -323,28 +323,87 @@ function outputAnchor(node: DagNode): Anchor {
   return { x: node.x + node.w / 2, y: node.bodyY + node.bodyH, side: "bottom" };
 }
 
-function inputAnchor(node: DagNode, index: number): Anchor {
-  if (node.kind === "dot") return { x: node.x + node.w / 2, y: node.y + node.h / 2, side: "center" };
-  const mainCount = node.inputs.length - node.maskInputs;
-  if (index >= mainCount) {
-    const maskCount = Math.max(1, node.maskInputs);
-    const maskIndex = index - mainCount;
-    const y =
-      maskCount === 1
-        ? node.bodyY + node.bodyH / 2
-        : node.bodyY + 8 + maskIndex * 10;
-    return { x: node.x + node.w, y, side: "right" };
-  }
-  const topCount = Math.min(mainCount, 4);
-  if (topCount > 0 && index < topCount) {
-    const slot = topCount - 1 - index;
+function inputAnchor(node: DagNode, source: DagNode): Anchor {
+  const center = { x: node.x + node.w / 2, y: node.bodyY + node.bodyH / 2 };
+  if (node.kind === "dot") return { ...center, side: "center" };
+  const from = outputAnchor(source);
+  if (node.shape === "circle") {
+    const dx = from.x - center.x;
+    const dy = from.y - center.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const radius = Math.min(node.w, node.bodyH) / 2;
     return {
-      x: node.x + 8 + ((node.w - 16) * (slot + 0.5)) / topCount,
-      y: node.bodyY,
-      side: "top",
+      x: center.x + (dx / length) * radius,
+      y: center.y + (dy / length) * radius,
+      side: dominantSide(dx, dy),
     };
   }
-  return { x: node.x, y: node.bodyY + 8 + (index - 4) * 10, side: "left" };
+  const rect = { left: node.x, top: node.bodyY, right: node.x + node.w, bottom: node.bodyY + node.bodyH };
+  const hit = rectEdge(center, from, rect);
+  return { x: hit.x, y: hit.y, side: rectSide(hit, rect, from, center) };
+}
+
+function dominantSide(dx: number, dy: number): Anchor["side"] {
+  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? "right" : "left";
+  return dy > 0 ? "bottom" : "top";
+}
+
+type EdgeRect = { left: number; top: number; right: number; bottom: number };
+
+/** Where the line from `center` toward `outside` crosses the rectangle. */
+function rectEdge(center: { x: number; y: number }, outside: { x: number; y: number }, rect: EdgeRect): { x: number; y: number } {
+  const dx = outside.x - center.x;
+  const dy = outside.y - center.y;
+  if (Math.hypot(dx, dy) < 1e-6) return { x: center.x, y: rect.top };
+  let bestT = Number.POSITIVE_INFINITY;
+  let hit: { x: number; y: number } | null = null;
+  const consider = (t: number, x: number, y: number) => {
+    if (t <= 1e-8 || t >= bestT) return;
+    if (x < rect.left - 1e-3 || x > rect.right + 1e-3) return;
+    if (y < rect.top - 1e-3 || y > rect.bottom + 1e-3) return;
+    bestT = t;
+    hit = { x, y };
+  };
+  if (dx !== 0) {
+    const tLeft = (rect.left - center.x) / dx;
+    consider(tLeft, rect.left, center.y + dy * tLeft);
+    const tRight = (rect.right - center.x) / dx;
+    consider(tRight, rect.right, center.y + dy * tRight);
+  }
+  if (dy !== 0) {
+    const tTop = (rect.top - center.y) / dy;
+    consider(tTop, center.x + dx * tTop, rect.top);
+    const tBottom = (rect.bottom - center.y) / dy;
+    consider(tBottom, center.x + dx * tBottom, rect.bottom);
+  }
+  return hit ?? { x: center.x, y: rect.top };
+}
+
+function rectSide(
+  hit: { x: number; y: number },
+  rect: EdgeRect,
+  from: { x: number; y: number },
+  center: { x: number; y: number },
+): Anchor["side"] {
+  const dx = center.x - from.x;
+  const dy = center.y - from.y;
+  const near = 0.75;
+  const faces: Array<{ side: Anchor["side"]; on: boolean; score: number }> = [
+    { side: "top", on: Math.abs(hit.y - rect.top) <= near, score: dy },
+    { side: "bottom", on: Math.abs(hit.y - rect.bottom) <= near, score: -dy },
+    { side: "left", on: Math.abs(hit.x - rect.left) <= near, score: dx },
+    { side: "right", on: Math.abs(hit.x - rect.right) <= near, score: -dx },
+  ];
+  let best: Anchor["side"] = "top";
+  let bestScore = Number.NEGATIVE_INFINITY;
+  for (const face of faces) {
+    if (!face.on) continue;
+    if (face.score > bestScore) {
+      bestScore = face.score;
+      best = face.side;
+    }
+  }
+  return best;
 }
 
 function inheritedDotColor(node: DagNode, byId: Map<string, DagNode>, seen: Set<string>): Rgba {
@@ -388,15 +447,10 @@ function sizeOf(
     const w = Math.max(100, Math.ceil(textWidth + LABEL_PAD * 2));
     return { w, h: bodyH, bodyH, stamp: 0 };
   }
-  const textWidth = lines.reduce((widest, line) => Math.max(widest, measure(line)), 0);
-  const bodyH = lines.length <= 1 ? 18 : 18 + (lines.length - 1) * 12;
+  // Op tiles stay one size. The autolabel is centered on the tile and spills past it.
   const stamp = postage ? 46 : 0;
-  if (shape === "circle") {
-    const diameter = Math.max(52, bodyH, Math.ceil(textWidth + 10));
-    return { w: diameter, h: diameter + stamp, bodyH: diameter, stamp };
-  }
-  const w = Math.max(80, Math.ceil(textWidth + 16));
-  return { w, h: bodyH + stamp, bodyH, stamp };
+  if (shape === "circle") return { w: 52, h: 52 + stamp, bodyH: 52, stamp };
+  return { w: 80, h: 18 + stamp, bodyH: 18, stamp };
 }
 
 function boundsOf(nodes: DagNode[]): DagScene["bounds"] {

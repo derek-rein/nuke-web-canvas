@@ -255,7 +255,7 @@ function shapeFragment() {
     // yNorm is -1 at the top of the body. Node bodies stay at the tile color on top
     // and darken to about 0.76 at the bottom. Dots are spheres: white at the top, gray below.
     const bodyShade = 1 - (yNorm + 1) * 0.12;
-    const dotShade = 1.35 - (yNorm + 1) * 0.45;
+    const dotShade = 1.2 - (yNorm + 1) * 0.28;
     const shade = std.select(bodyShade, dotShade, isDot);
     const shaded = std.select(body, true, isDot);
     const lit = std.select(1, shade, shaded);
