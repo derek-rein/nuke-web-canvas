@@ -1,3 +1,8 @@
+.nk-shell {
+  container-type: inline-size;
+  container-name: dag;
+}
+
 .nk-props {
   width: 440px;
   flex: 0 0 440px;
@@ -13,6 +18,21 @@
 .nk-props-empty {
   margin: 16px;
   color: #9a9a9a;
+}
+
+.nk-props-close {
+  display: none;
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  background: #3a3a3a;
+  color: #ddd;
+  border: 1px solid #111;
+  border-radius: 3px;
+  font: 14px Verdana, sans-serif;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .nk-props-head {
@@ -199,4 +219,28 @@
   border: 0;
   border-top: 1px solid #1a1a1a;
   margin: 6px 0;
+}
+
+/* Phone / Storybook iframe: a docked 440px pane zeros the WebGPU canvas. */
+@container dag (max-width: 720px) {
+  .nk-props {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(440px, 100%);
+    flex: none;
+    z-index: 6;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .nk-props:has(.nk-props-empty) {
+    display: none;
+  }
+
+  .nk-props-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }

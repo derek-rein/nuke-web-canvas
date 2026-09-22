@@ -15,7 +15,7 @@ import {
   type PropertyPanel,
 } from "./nuke/properties.ts";
 
-export function PropertiesPane(props: { panel: PropertyPanel | null }): JSX.Element {
+export function PropertiesPane(props: { panel: PropertyPanel | null; onClose?: () => void }): JSX.Element {
   const panel = props.panel;
   const identity = panel ? `${panel.className}\0${panel.name}` : "";
   const [tabState, setTabState] = useState<{ identity: string; id: string | null }>({ identity: "", id: null });
@@ -28,6 +28,11 @@ export function PropertiesPane(props: { panel: PropertyPanel | null }): JSX.Elem
         <span className="nk-swatch" style={{ background: panel.color }} />
         <input className="nk-name" value={panel.name} readOnly aria-label="Node name" />
         <span className="nk-class">{panel.className}</span>
+        {props.onClose ? (
+          <button type="button" className="nk-props-close" onClick={props.onClose} aria-label="Close properties">
+            ×
+          </button>
+        ) : null}
       </div>
       <div className="nk-tabs" role="tablist">
         {panel.tabs.map((tab) => (

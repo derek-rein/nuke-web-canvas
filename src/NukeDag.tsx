@@ -437,7 +437,7 @@ export function NukeDag(props: {
 
   return (
     <div
-      className={props.className}
+      className={[props.className, "nk-shell"].filter(Boolean).join(" ")}
       onPaste={(event) => {
         const next = replacementScript(event.clipboardData.getData("text/plain"));
         if (!next) return;
@@ -456,6 +456,8 @@ export function NukeDag(props: {
         background: "#3c3c3c",
         ...props.style,
         display: "flex",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
     <div
@@ -626,7 +628,7 @@ export function NukeDag(props: {
         </p>
       ) : null}
     </div>
-    {props.showProperties ? <PropertiesPane panel={panel} /> : null}
+    {props.showProperties ? <PropertiesPane panel={panel} onClose={clearSelection} /> : null}
     </div>
   );
 }
