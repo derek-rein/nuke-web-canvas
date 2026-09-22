@@ -16,6 +16,12 @@ OUT = ROOT / "src" / "nuke" / "catalog.ts"
 
 BUILTIN_SHAPE = {
     "Viewer": "point",
+    "Group": "point",
+    "Gizmo": "point",
+    "LiveGroup": "point",
+    "VariableGroup": "point",
+    "Input": "input",
+    "Output": "output",
     "Camera": "circle",
     "Camera2": "circle",
     "Camera3": "circle",
@@ -208,6 +214,14 @@ def nuke_colors(executable: Path, names: list[str]) -> dict[str, str]:
         "        print(name + '\\tERR')\n"
         "        continue\n"
         "    print(f'{name}\\t{bits:08x}')\n"
+        "try:\n"
+        "    note = nuke.createNode('StickyNote', inpanel=False)\n"
+        "    tile = int(note['tile_color'].value()) & 0xFFFFFFFF\n"
+        "    nuke.delete(note)\n"
+        "    if tile:\n"
+        "        print(f'StickyNote\\t{tile:08x}')\n"
+        "except Exception:\n"
+        "    pass\n"
     )
     proc = subprocess.run(
         [str(executable), "--nc", "-t", "-q", "--safe", "-"],
@@ -253,6 +267,14 @@ def main() -> None:
         mask = mask_of(name, shape)
         lines.append(f"  {name}: {{ color: \"{color}\", shape: \"{shape}\", mask: {str(mask).lower()} }},")
     lines.append("};")
+    lines.append("")
+    lines.append("export function catalogEntry(className: string): CatalogEntry | undefined {")
+    lines.append("  return NODE_CATALOG[className];")
+    lines.append("}")
+    lines.append("")
+    lines.append("export function classHasMask(className: string): boolean {")
+    lines.append("  return NODE_CATALOG[className]?.mask ?? false;")
+    lines.append("}")
     lines.append("")
     OUT.write_text("\n".join(lines))
     print(f"wrote {len(colors)} classes")

@@ -1,10 +1,15 @@
+import type { UserKnob } from "./userKnobs.ts";
+
 export type KnobMap = Record<string, string>;
+export type { UserKnob };
 
 export type RawNode = {
   id: string;
   className: string;
   name: string;
   knobs: KnobMap;
+  /** Ordered addUserKnob definitions. Values live in `knobs`. */
+  userKnobs: UserKnob[];
   /** Input 0 is Nuke's B input. Null is a disconnected input. */
   inputs: (string | null)[];
   /** How many trailing entries of `inputs` are mask inputs from `N+M`. */

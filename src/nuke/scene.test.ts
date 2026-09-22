@@ -82,6 +82,68 @@ Grade {
   expect(out?.from).toEqual({ x: 40, y: 46, side: "center" });
 });
 
+test("a group labels its only input 1", () => {
+  const scene = sceneOf(`
+Constant {
+ inputs 0
+ name Constant1
+ xpos 0
+ ypos 0
+}
+Group {
+ name Group1
+ xpos 0
+ ypos 80
+}
+`);
+  const group = nodeNamed(scene.nodes, "Group1");
+  const pipe = scene.pipes.find((item) => item.toId === group.id);
+  expect(group.shape).toBe("point");
+  expect(pipe?.label).toBe("1");
+});
+
+test("viewer inputs are numbered and input and output are trapezoids", () => {
+  const scene = sceneOf(`
+Constant {
+ inputs 0
+ name A
+ xpos 0
+ ypos 0
+}
+Constant {
+ inputs 0
+ name B
+ xpos 120
+ ypos 0
+}
+Viewer {
+ inputs 2
+ name Viewer1
+ xpos 40
+ ypos 80
+}
+Input {
+ inputs 0
+ name Input1
+ xpos 0
+ ypos 160
+}
+Output {
+ name Output1
+ xpos 0
+ ypos 220
+}
+`);
+  const viewer = nodeNamed(scene.nodes, "Viewer1");
+  const labels = scene.pipes
+    .filter((pipe) => pipe.toId === viewer.id)
+    .sort((a, b) => a.inputIndex - b.inputIndex)
+    .map((pipe) => pipe.label);
+  expect(labels).toEqual(["1", "2"]);
+  expect(nodeNamed(scene.nodes, "Input1").shape).toBe("input");
+  expect(nodeNamed(scene.nodes, "Output1").shape).toBe("output");
+});
+
 test("merge input 0 is the right-hand B pipe", () => {
   const scene = sceneOf(`
 Constant {

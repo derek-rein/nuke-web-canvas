@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, JSX, PointerEvent as ReactPointerEvent } from "react";
 import { createNukeRenderer, type NukeRenderer } from "./gpu/renderer.ts";
+import { buildProperties } from "./nuke/properties.ts";
+import { PropertiesPane } from "./PropertiesPane.tsx";
 import type { Camera } from "./nuke/view.ts";
 import { hitTest } from "./nuke/hitTest.ts";
 import {
@@ -30,6 +32,7 @@ export function NukeDag(props: {
   style?: CSSProperties;
   onSelectNode?: (node: DagNode | null) => void;
   onScriptChange?: (script: string) => void;
+  showProperties?: boolean;
 }): JSX.Element {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -64,6 +67,9 @@ export function NukeDag(props: {
   }, [script]);
 
   const current = parsed.scene ? sceneAt(parsed.scene, path) : null;
+  const selectedId = selectedIds.at(-1);
+  const selected = current && selectedId ? (current.nodes.find((node) => node.id === selectedId) ?? null) : null;
+  const panel = props.showProperties ? (selected ? buildProperties(selected) : null) : null;
   const crumbs = useMemo(() => crumbsFor(parsed.scene, path), [parsed.scene, path]);
   sceneRef.current = current;
   // cameraRef is not state, so pan, zoom, fit, and map drag must call this beside renderer.draw().
@@ -430,10 +436,7 @@ export function NukeDag(props: {
 
   return (
     <div
-      ref={wrapRef}
       className={props.className}
-      data-gpu={gpuState}
-      tabIndex={0}
       onPaste={(event) => {
         const next = replacementScript(event.clipboardData.getData("text/plain"));
         if (!next) return;
@@ -445,6 +448,19 @@ export function NukeDag(props: {
         clearSelection();
         props.onScriptChange?.(next);
       }}
+      style={{
+        width: "100%",
+        height: "100%",
+        minHeight: 0,
+        background: "#3c3c3c",
+        ...props.style,
+        display: "flex",
+      }}
+    >
+    <div
+      ref={wrapRef}
+      data-gpu={gpuState}
+      tabIndex={0}
       onPointerMove={(event) => {
         lastPointer.current = { x: event.clientX, y: event.clientY };
       }}
@@ -500,12 +516,11 @@ export function NukeDag(props: {
       }}
       style={{
         position: "relative",
-        width: "100%",
+        flex: "1 1 auto",
+        minWidth: 0,
         height: "100%",
-        background: "#3c3c3c",
         outline: "none",
         overflow: "hidden",
-        ...props.style,
       }}
     >
       <canvas
@@ -609,6 +624,8 @@ export function NukeDag(props: {
           {parsed.error ?? gpuError}
         </p>
       ) : null}
+    </div>
+    {props.showProperties ? <PropertiesPane panel={panel} /> : null}
     </div>
   );
 }

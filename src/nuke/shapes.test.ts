@@ -14,5 +14,9 @@ test("Nuke class names map to the DAG outline from node_shape", () => {
   expect(nodeShape("DeepRead")).toBe("deep");
   expect(nodeShape("BasicMaterial")).toBe("point");
   expect(nodeShape("Viewer")).toBe("point");
+  expect(nodeShape("Group")).toBe("point");
+  expect(nodeShape("Gizmo")).toBe("point");
+  expect(nodeShape("Input")).toBe("input");
+  expect(nodeShape("Output")).toBe("output");
   expect(nodeShape("ParticleEmitter")).toBe("particle");
 });

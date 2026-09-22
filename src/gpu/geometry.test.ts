@@ -160,7 +160,73 @@ Grade {
   expect(under(grade!)).toBe(true);
 });
 
-test("a dot becomes circle vertices", () => {
+test("hide input conceals the pipe but the source stays connected", () => {
+  const scene = sceneOf(`
+Blur {
+ inputs 0
+ name Blur1
+ xpos 0
+ ypos 0
+}
+Grade {
+ name Grade1
+ hide_input true
+ xpos 0
+ ypos 80
+}
+`);
+  const vertices = buildGeometry(scene, 1, null, null).filter((vertex) => vertex.mode === 0);
+  const blur = scene.nodes.find((node) => node.name === "Blur1");
+  const grade = scene.nodes.find((node) => node.name === "Grade1");
+  expect(blur && grade).toBeTruthy();
+  expect(scene.pipes).toEqual([]);
+  const under = (node: NonNullable<typeof blur>) =>
+    vertices.some(
+      (vertex) =>
+        vertex.r === 0 &&
+        vertex.g === 0 &&
+        vertex.b === 0 &&
+        vertex.y > node.bodyY + node.bodyH + 2 &&
+        vertex.y < node.bodyY + node.bodyH + 12 &&
+        Math.abs(vertex.x - (node.x + node.w / 2)) < 6,
+    );
+  expect(under(blur!)).toBe(false);
+  expect(under(grade!)).toBe(true);
+});
+
+test("a sticky note is a bordered rounded box with centered text", () => {
+  const scene = sceneOf(`
+StickyNote {
+ inputs 0
+ name StickyNote1
+ label "type note here"
+ xpos 0
+ ypos 0
+}
+`);
+  const note = scene.nodes.find((node) => node.name === "StickyNote1");
+  expect(note).toBeTruthy();
+  expect(note!.color[0]).toBeCloseTo(0xcc / 255, 2);
+  expect(note!.color[1]).toBeCloseTo(0xcc / 255, 2);
+  expect(note!.color[2]).toBeCloseTo(0x80 / 255, 2);
+  const vertices = buildGeometry(scene, 1, atlas, null);
+  const border = vertices.some(
+    (vertex) =>
+      vertex.mode === 1 &&
+      vertex.r < 0.2 &&
+      vertex.x < note!.x &&
+      vertex.y >= note!.y - 1 &&
+      vertex.y <= note!.y + note!.h,
+  );
+  expect(border).toBe(true);
+  const text = vertices.filter((vertex) => vertex.mode === 3);
+  expect(text.length).toBeGreaterThan(0);
+  const midX = note!.x + note!.w / 2;
+  const midY = note!.y + note!.h / 2;
+  expect(text.some((vertex) => Math.abs(vertex.x - midX) < 8 && Math.abs(vertex.y - midY) < note!.h / 2)).toBe(true);
+});
+
+test("a dot becomes a diamond", () => {
   const scene = sceneOf(`
 Dot {
  inputs 0
@@ -170,7 +236,47 @@ Dot {
 }
 `);
   const vertices = buildGeometry(scene, 1, null, null);
-  expect(vertices.some((vertex) => vertex.mode === 2)).toBe(true);
+  expect(vertices.some((vertex) => vertex.mode === 11)).toBe(true);
+});
+
+test("a pipe into a viewer is dashed", () => {
+  const scene = sceneOf(`
+Constant {
+ inputs 0
+ name Constant1
+ xpos 0
+ ypos 0
+}
+Viewer {
+ name Viewer1
+ xpos 160
+ ypos 0
+}
+`);
+  const viewer = scene.nodes.find((node) => node.name === "Viewer1");
+  const constant = scene.nodes.find((node) => node.name === "Constant1");
+  expect(viewer).toBeTruthy();
+  expect(constant).toBeTruthy();
+  const y = constant!.bodyY + constant!.bodyH / 2;
+  const xs = buildGeometry(scene, 1, null, null)
+    .filter(
+      (vertex) =>
+        vertex.mode === 0 &&
+        vertex.r === 0 &&
+        vertex.g === 0 &&
+        vertex.b === 0 &&
+        Math.abs(vertex.y - y) < 2 &&
+        vertex.x > constant!.x + constant!.w &&
+        vertex.x < viewer!.x,
+    )
+    .map((vertex) => vertex.x)
+    .sort((a, b) => a - b);
+  expect(xs.length).toBeGreaterThan(0);
+  let gap = 0;
+  for (let index = 1; index < xs.length; index += 1) {
+    gap = Math.max(gap, xs[index]! - xs[index - 1]!);
+  }
+  expect(gap).toBeGreaterThan(2);
 });
 
 test("a pipe reaches both anchors", () => {
@@ -266,9 +372,18 @@ BackdropNode {
 }
 `);
   const vertices = buildGeometry(scene, 1, null, null);
-  expect(vertices[0]?.mode).toBe(1);
+  expect(vertices[0]?.mode).toBe(0);
   expect(vertices[0]?.g).toBe(1);
   expect(vertices[0]?.r).toBe(0);
+  const backdrop = scene.nodes.find((node) => node.name === "BackdropNode1");
+  expect(backdrop).toBeTruthy();
+  const title = buildGeometry(scene, 1, atlas, null).filter(
+    (vertex) =>
+      vertex.mode === 3 &&
+      vertex.y < backdrop!.y + 22 &&
+      Math.abs(vertex.x - (backdrop!.x + backdrop!.w / 2)) < backdrop!.w / 3,
+  );
+  expect(title.length).toBeGreaterThan(0);
 });
 
 test("merge inputs are labeled outside the node", () => {

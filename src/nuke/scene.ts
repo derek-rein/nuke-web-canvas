@@ -14,6 +14,7 @@ export type DagNode = {
   className: string;
   name: string;
   knobs: Record<string, string>;
+  userKnobs: RawNode["userKnobs"];
   inputs: (string | null)[];
   maskInputs: number;
   cloneOf: string | null;
@@ -159,6 +160,7 @@ function buildNode(raw: RawNode, measure: MeasureText): DagNode {
     className: raw.className,
     name: raw.name,
     knobs: raw.knobs,
+    userKnobs: raw.userKnobs,
     inputs: raw.inputs,
     maskInputs: raw.maskInputs,
     cloneOf: raw.cloneOf,
@@ -227,6 +229,11 @@ const NUMBERED_ARROW_LABELS = new Set([
   "Switch",
   "ZComp",
   "ZMerge",
+  "Group",
+  "Gizmo",
+  "LiveGroup",
+  "VariableGroup",
+  "Viewer",
 ]);
 
 function pipeLabel(node: DagNode, index: number): string {

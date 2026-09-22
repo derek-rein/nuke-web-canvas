@@ -1,0 +1,202 @@
+.nk-props {
+  width: 440px;
+  flex: 0 0 440px;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  background: #323232;
+  color: #e6e6e6;
+  border-left: 1px solid #1a1a1a;
+  font: 11px Verdana, sans-serif;
+}
+
+.nk-props-empty {
+  margin: 16px;
+  color: #9a9a9a;
+}
+
+.nk-props-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  background: #2a2a2a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.nk-swatch {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #111;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+
+.nk-name {
+  flex: 1;
+  min-width: 0;
+  background: #3c3c3c;
+  color: #eee;
+  border: 1px solid #111;
+  border-radius: 2px;
+  padding: 4px 6px;
+}
+
+.nk-class {
+  color: #9a9a9a;
+}
+
+.nk-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 8px;
+  background: #2a2a2a;
+  border-bottom: 1px solid #111;
+}
+
+.nk-tabs button {
+  background: #3a3a3a;
+  color: #ccc;
+  border: 1px solid #111;
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  padding: 4px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.nk-tabs button[aria-selected="true"] {
+  background: #4a4a4a;
+  color: #fff;
+}
+
+.nk-body {
+  padding: 8px;
+}
+
+.nk-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  margin: 0 0 6px;
+}
+
+.nk-field {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.nk-lab {
+  width: 88px;
+  flex: 0 0 88px;
+  color: #c8c8c8;
+  text-align: right;
+}
+
+.nk-field input,
+.nk-field select,
+.nk-field textarea,
+.nk-channels input,
+.nk-channels select {
+  background: #3e3e3e;
+  color: #eee;
+  border: 1px solid #111;
+  border-radius: 2px;
+  font: inherit;
+  padding: 2px 4px;
+}
+
+.nk-field input:disabled,
+.nk-field select:disabled,
+.nk-channels input:disabled,
+.nk-channels select:disabled,
+.nk-check input:disabled {
+  color: #eee;
+  opacity: 1;
+  -webkit-text-fill-color: #eee;
+}
+
+.nk-field input[type="range"] {
+  width: 90px;
+  padding: 0;
+}
+
+.nk-field textarea {
+  width: 220px;
+  min-height: 48px;
+  resize: vertical;
+}
+
+.nk-check {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.nk-channels {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.nk-ch {
+  min-width: 14px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 3px;
+  border-radius: 2px;
+  color: #111;
+  font-size: 10px;
+  opacity: 0.45;
+}
+
+.nk-ch.on {
+  opacity: 1;
+}
+
+.nk-ch.r { background: #e23b3b; }
+.nk-ch.g { background: #3cba3c; }
+.nk-ch.b { background: #3c6fe2; }
+.nk-ch.a { background: #f2f2f2; }
+
+.nk-head {
+  margin: 8px 0 4px;
+  color: #ddd;
+  font-weight: bold;
+}
+
+.nk-gap {
+  height: 8px;
+  flex-basis: 100%;
+}
+
+.nk-note {
+  color: #9a9a9a;
+}
+
+.nk-slider,
+.nk-curve {
+  display: block;
+}
+
+.nk-dim {
+  min-width: 14px;
+  padding: 1px 3px;
+  border: 1px solid #111;
+  border-radius: 2px;
+  color: #aaa;
+  text-align: center;
+}
+
+.nk-rule {
+  flex-basis: 100%;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #1a1a1a;
+  margin: 6px 0;
+}

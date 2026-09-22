@@ -325,3 +325,54 @@ end_group
   expect(script.root.className).toBe("Root");
   expect(script.root.id).toBe("root");
 });
+
+test("addUserKnob keeps its order and leaves the value in knobs", () => {
+  const script = parseNukeScript(`
+Blur {
+ inputs 0
+ name Blur1
+ addUserKnob {20 User}
+ addUserKnob {7 gain l "Gain" t "brighten" R 0 2}
+ addUserKnob {4 mode l Mode M {soft hard}}
+ addUserKnob {6 secret l Secret +HIDDEN}
+ gain 1.5
+ mode hard
+ size 3
+}
+`);
+  const blur = findNamed(script.root, "Blur1");
+  expect(blur.knobs.addUserKnob).toBeUndefined();
+  expect(blur.knobs.gain).toBe("1.5");
+  expect(blur.knobs.mode).toBe("hard");
+  expect(blur.knobs.size).toBe("3");
+  expect(blur.userKnobs.map((knob) => [knob.kind, knob.name, knob.label])).toEqual([
+    ["tab", "User", "User"],
+    ["double", "gain", "Gain"],
+    ["enumeration", "mode", "Mode"],
+    ["bool", "secret", "Secret"],
+  ]);
+  expect(blur.userKnobs[1]).toMatchObject({ tooltip: "brighten", min: 0, max: 2, startLine: true });
+  expect(blur.userKnobs[2]?.menu).toEqual(["soft", "hard"]);
+  expect(blur.userKnobs[3]?.hidden).toBe(true);
+});
+
+test("a clone keeps user knobs and can replace one by name", () => {
+  const script = parseNukeScript(`
+NoOp {
+ inputs 0
+ name NoOp1
+ addUserKnob {1 title l Title}
+ title Hello
+}
+set N1 [stack 0]
+clone $N1 {
+ name NoOp2
+ addUserKnob {1 title l "New title"}
+ title There
+}
+`);
+  const clone = findNamed(script.root, "NoOp2");
+  expect(clone.className).toBe("NoOp");
+  expect(clone.knobs.title).toBe("There");
+  expect(clone.userKnobs.map((knob) => knob.label)).toEqual(["New title"]);
+});

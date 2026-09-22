@@ -1,4 +1,5 @@
-import type { KnobMap, ParsedScript, RawNode } from "./types.ts";
+import type { KnobMap, ParsedScript, RawNode, UserKnob } from "./types.ts";
+import { parseAddUserKnob } from "./userKnobs.ts";
 
 const GROUP_CLASSES = new Set(["Group", "Gizmo", "LiveGroup", "VariableGroup"]);
 const SKIP_STACK = new Set(["BackdropNode", "StickyNote", "Root", "LiveGroupInfo"]);
@@ -68,14 +69,15 @@ class Scanner {
     return text;
   }
 
-  readBody(): KnobMap {
+  readBody(): { knobs: KnobMap; userKnobs: UserKnob[] } {
     if (this.peek() === "{") this.i += 1;
     const knobs: KnobMap = {};
+    const userKnobs: UserKnob[] = [];
     while (!this.eof()) {
       this.skip();
       if (this.peek() === "}") {
         this.i += 1;
-        return knobs;
+        return { knobs, userKnobs };
       }
       if (this.eof()) break;
       const key = this.readIdent();
@@ -84,6 +86,11 @@ class Scanner {
         continue;
       }
       this.skipHorizontal();
+      if (key === "addUserKnob") {
+        const parsed = parseAddUserKnob(this.readValue());
+        if (parsed) userKnobs.push(parsed);
+        continue;
+      }
       knobs[key] = this.readValue();
     }
     throw new Error("Unclosed brace in Nuke script");
@@ -151,6 +158,7 @@ function emptyRoot(): RawNode {
     className: "Root",
     name: "Root",
     knobs: {},
+    userKnobs: [],
     inputs: [],
     maskInputs: 0,
     children: [],
@@ -175,6 +183,7 @@ function nextName(frame: Frame, className: string): string {
 function createNode(
   className: string,
   knobs: KnobMap,
+  userKnobs: UserKnob[],
   frame: Frame,
   cloneOf: string | null,
 ): RawNode {
@@ -184,11 +193,22 @@ function createNode(
     className,
     name,
     knobs: { ...knobs, name },
+    userKnobs,
     inputs: [],
     maskInputs: 0,
     children: [],
     cloneOf,
   };
+}
+
+function mergeUserKnobs(base: UserKnob[], extra: UserKnob[]): UserKnob[] {
+  const next = [...base];
+  for (const knob of extra) {
+    const index = knob.name.length > 0 ? next.findIndex((item) => item.name === knob.name) : -1;
+    if (index >= 0) next[index] = knob;
+    else next.push(knob);
+  }
+  return next;
 }
 
 function link(node: RawNode, frame: Frame): void {
@@ -300,9 +320,11 @@ export function parseNukeScript(source: string): ParsedScript {
         continue;
       }
       const sourceNode = vars.get(sourceName) ?? null;
-      const knobs = { ...(sourceNode?.knobs ?? {}), ...scanner.readBody() };
+      const body = scanner.readBody();
+      const knobs = { ...(sourceNode?.knobs ?? {}), ...body.knobs };
+      const userKnobs = mergeUserKnobs(sourceNode?.userKnobs ?? [], body.userKnobs);
       const current = frame();
-      const node = createNode(sourceNode?.className ?? "NoOp", knobs, current, sourceNode?.id ?? null);
+      const node = createNode(sourceNode?.className ?? "NoOp", knobs, userKnobs, current, sourceNode?.id ?? null);
       link(node, current);
       if (GROUP_CLASSES.has(node.className)) {
         frames.push({ parent: node, stack: [], nameCounts: new Map() });
@@ -316,12 +338,12 @@ export function parseNukeScript(source: string): ParsedScript {
         scanner.readBraceGroup();
         continue;
       }
-      const knobs = scanner.readBody();
+      const body = scanner.readBody();
       if (ident === "Root" || ident === "LiveGroupInfo") {
         continue;
       }
       const current = frame();
-      const node = createNode(ident, knobs, current, null);
+      const node = createNode(ident, body.knobs, body.userKnobs, current, null);
       link(node, current);
       if (GROUP_CLASSES.has(ident)) {
         frames.push({ parent: node, stack: [], nameCounts: new Map() });

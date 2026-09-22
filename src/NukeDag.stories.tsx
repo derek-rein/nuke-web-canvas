@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NukeDag } from "./NukeDag.tsx";
 import { SAMPLE_SCRIPT } from "./nuke/sample.ts";
+import { NST_COMMIT, loadNstGraph } from "./stories/nst/toolkit.ts";
 
 const chain = `version 15.1 v1
 Read {
@@ -32,6 +34,9 @@ Write {
 const meta = {
   title: "Nuke/NukeDag",
   component: NukeDag,
+  argTypes: {
+    showProperties: { control: "boolean" },
+  },
   parameters: { layout: "fullscreen" },
   decorators: [
     (Story) => (
@@ -120,12 +125,12 @@ export const Shapes: Story = {
 };
 
 export const Sample: Story = {
-  args: { script: SAMPLE_SCRIPT },
+  args: { script: SAMPLE_SCRIPT, showProperties: true },
   parameters: {
     docs: {
       description: {
         story:
-          "Paste a .nk or .gizmo to replace the graph. Middle-drag or Alt-drag pans. The scroll wheel, +/-, or Alt+middle-drag zooms around the cursor. F or a middle-click frames the selection, or the whole graph when nothing is selected. Drag to select nodes, Shift to add, Ctrl+A to select every node. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. Requires WebGPU.",
+          "Paste a .nk or .gizmo to replace the graph. Middle-drag or Alt-drag pans. The scroll wheel, +/-, or Alt+middle-drag zooms around the cursor. F or a middle-click frames the selection, or the whole graph when nothing is selected. Drag to select nodes, Shift to add, Ctrl+A to select every node. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. The properties pane is read-only React, and showProperties turns it off. Requires WebGPU.",
       },
     },
   },
@@ -171,6 +176,92 @@ export const Gizmo: Story = {
 
 export const Chain: Story = {
   args: { script: chain },
+};
+
+const toolkit = `Inside of a gizmo from Tony Lyons' Nuke Survival Toolkit, loaded from GitHub at ${NST_COMMIT} rather than copied into this repo. The graph is the tool itself, not the closed group. https://github.com/CreativeLyons/NukeSurvivalToolkit_publicRelease`;
+
+function ToolkitGraph(props: { file: string; showProperties?: boolean }) {
+  const [script, setScript] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    setScript(null);
+    setError(null);
+    loadNstGraph(props.file).then(
+      (text) => {
+        if (live) setScript(text);
+      },
+      (reason: unknown) => {
+        if (live) setError(reason instanceof Error ? reason.message : "Could not load the gizmo");
+      },
+    );
+    return () => {
+      live = false;
+    };
+  }, [props.file]);
+  if (error) return <p style={{ color: "#ddd", font: "12px Verdana, sans-serif", margin: 16 }}>{error}</p>;
+  if (!script) return <p style={{ color: "#ddd", font: "12px Verdana, sans-serif", margin: 16 }}>Loading {props.file}…</p>;
+  return <NukeDag script={script} showProperties={props.showProperties ?? true} />;
+}
+
+export const ExponentialGlow: Story = {
+  args: { script: "", showProperties: true },
+  render: (args) => <ToolkitGraph file="NST_Glow_Exponential.gizmo" showProperties={args.showProperties} />,
+  parameters: {
+    docs: {
+      description: {
+        story: `SPIN VFX Glow_Exponential, the stacked blurs that fall off. ${toolkit}`,
+      },
+    },
+  },
+};
+
+export const ExponGlow: Story = {
+  args: { script: "", showProperties: true },
+  render: (args) => <ToolkitGraph file="NST_ExponGlow.gizmo" showProperties={args.showProperties} />,
+  parameters: {
+    docs: {
+      description: {
+        story: `Tony Lyons' ExponGlow. ${toolkit}`,
+      },
+    },
+  },
+};
+
+export const Halation: Story = {
+  args: { script: "", showProperties: true },
+  render: (args) => <ToolkitGraph file="NST_Halation.gizmo" showProperties={args.showProperties} />,
+  parameters: {
+    docs: {
+      description: {
+        story: `Tony Lyons' Halation. ${toolkit}`,
+      },
+    },
+  },
+};
+
+export const Glass: Story = {
+  args: { script: "", showProperties: true },
+  render: (args) => <ToolkitGraph file="NST_Glass.gizmo" showProperties={args.showProperties} />,
+  parameters: {
+    docs: {
+      description: {
+        story: `Glass, with IDistort and a defocus. ${toolkit}`,
+      },
+    },
+  },
+};
+
+export const HeatWave: Story = {
+  args: { script: "", showProperties: true },
+  render: (args) => <ToolkitGraph file="NST_HeatWave.gizmo" showProperties={args.showProperties} />,
+  parameters: {
+    docs: {
+      description: {
+        story: `HeatWave, a dense STMap distortion. ${toolkit}`,
+      },
+    },
+  },
 };
 
 export const UnclosedScript: Story = {

@@ -1,0 +1,417 @@
+import type { KnobKind } from "./knobTypes.ts";
+import { KNOB_SCHEMAS, type KnobRow } from "./knobSchemas.ts";
+import type { DagNode } from "./scene.ts";
+import type { UserKnob } from "./userKnobs.ts";
+
+export type ChannelMask = { r: boolean; g: boolean; b: boolean; a: boolean };
+
+export type PropertyControl = {
+  id: string;
+  name: string;
+  kind: KnobKind;
+  label: string;
+  tooltip: string;
+  value: string;
+  options: string[];
+  optionLabels: string[];
+  min: number | null;
+  max: number | null;
+  checked: boolean;
+  channels: ChannelMask;
+  secret: boolean;
+  startLine: boolean;
+};
+
+export type PropertyTab = { id: string; name: string; controls: PropertyControl[] };
+
+export type PropertyPanel = {
+  name: string;
+  className: string;
+  color: string;
+  tabs: PropertyTab[];
+};
+
+type KnobSpec = {
+  name: string;
+  kind: KnobKind;
+  label: string;
+  tooltip: string;
+  menu: string[];
+  optionLabels: string[];
+  link: string;
+  min: number | null;
+  max: number | null;
+  startLine: boolean;
+  hidden: boolean;
+  defaultValue: string;
+};
+
+const LAYOUT_KNOBS = new Set([
+  "name",
+  "xpos",
+  "ypos",
+  "selected",
+  "inputs",
+  "hide_input",
+  "disable",
+  "postage_stamp",
+  "postage_stamp_frame",
+  "tile_color",
+  "gl_color",
+  "note_font",
+  "note_font_size",
+  "note_font_color",
+  "label",
+  "z_order",
+  "icon",
+  "cached",
+  "bookmark",
+  "dope_sheet",
+  "help",
+  "knobChanged",
+  "onCreate",
+  "onDestroy",
+  "updateUI",
+  "autolabel",
+  "indicators",
+  "panel",
+  "rootNodeUpdated",
+  "lifetimeStart",
+  "lifetimeEnd",
+  "useLifetime",
+]);
+
+const TAB_KINDS = new Set<KnobKind>(["tab", "tabGroup"]);
+
+export function buildProperties(node: DagNode): PropertyPanel {
+  const schema = (KNOB_SCHEMAS[node.className] ?? []).map(rowToSpec);
+  const custom = node.userKnobs.map(userSpec);
+  const customByName = new Map<string, KnobSpec>();
+  for (const knob of custom) {
+    if (knob.name) customByName.set(knob.name, knob);
+  }
+  const emitted = new Set<string>();
+  const classControls: PropertyControl[] = [];
+  schema.forEach((knob, index) => {
+    const override = knob.name ? customByName.get(knob.name) : undefined;
+    if (override?.hidden) {
+      if (knob.name) emitted.add(knob.name);
+      return;
+    }
+    const source = override ? { ...override, defaultValue: knob.defaultValue || override.defaultValue } : knob;
+    classControls.push(apply(node.knobs, source, index));
+    if (knob.name) emitted.add(knob.name);
+  });
+  for (const [name, value] of Object.entries(node.knobs)) {
+    if (emitted.has(name) || customByName.has(name) || LAYOUT_KNOBS.has(name)) continue;
+    if (schema.some((knob) => knob.name === name)) continue;
+    classControls.push(inferControl(name, value, classControls.length));
+    emitted.add(name);
+  }
+  const tabs = packTabs(tabTitle(node.className), classControls).filter((tab) => tab.controls.length > 0);
+  const extras = custom.filter((knob) => !knob.hidden && !(knob.name && emitted.has(knob.name)));
+  appendCustom(tabs, extras, node);
+  tabs.push(nodeTab(node));
+  return {
+    name: node.name,
+    className: node.className,
+    color: cssColor(node.color),
+    tabs,
+  };
+}
+
+export function sliderFraction(value: number, min: number, max: number): number {
+  if (!(max > min)) return 0;
+  const clamped = Math.min(max, Math.max(min, value));
+  if (min === 0 && max >= 10) {
+    const span = Math.log1p(max - min);
+    return span === 0 ? 0 : Math.log1p(clamped - min) / span;
+  }
+  return (clamped - min) / (max - min);
+}
+
+export function sliderMarks(min: number, max: number): number[] {
+  if (!(max > min)) return [min];
+  if (min === 0 && max >= 10) {
+    const wanted = [0, 1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    const marks = wanted.filter((mark) => mark >= min && mark <= max);
+    if (marks[0] !== min) marks.unshift(min);
+    if (marks[marks.length - 1] !== max) marks.push(max);
+    return marks;
+  }
+  const marks: number[] = [];
+  for (let index = 0; index <= 10; index += 1) marks.push(min + ((max - min) * index) / 10);
+  return marks;
+}
+
+export function sliderLabeled(mark: number, min: number, max: number): boolean {
+  if (mark === min || mark === max) return true;
+  if (min === 0 && max <= 1) return Math.abs(mark - (min + max) / 2) < 1e-6;
+  if (min === 0 && max >= 10) return mark === 1 || mark === 10 || mark === 50;
+  return true;
+}
+
+export function formatMark(value: number): string {
+  if (!Number.isFinite(value)) return "";
+  if (Math.abs(value) >= 100 || Number.isInteger(value)) return String(Math.round(value));
+  return value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+export function curvePoints(value: string): Array<[number, number]> {
+  const body = /curve\s+([^}]*)/i.exec(value)?.[1] ?? "";
+  const nums = body.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  const points: Array<[number, number]> = [];
+  for (let index = 0; index + 1 < nums.length; index += 2) {
+    const x = nums[index];
+    const y = nums[index + 1];
+    if (x == null || y == null || !Number.isFinite(x) || !Number.isFinite(y)) continue;
+    points.push([x, y]);
+  }
+  return points;
+}
+
+export function channelMask(value: string): ChannelMask {
+  const text = value.trim().toLowerCase();
+  if (text === "all" || text === "rgba" || text === "rgb.rgba") return { r: true, g: true, b: true, a: true };
+  if (text === "rgb") return { r: true, g: true, b: true, a: false };
+  if (text === "alpha" || text === "a" || text === "rgba.alpha") return { r: false, g: false, b: false, a: true };
+  if (text === "none" || text === "-" || text === "") return { r: false, g: false, b: false, a: false };
+  const part = text.split(".").pop() ?? text;
+  return {
+    r: part === "red" || part === "r",
+    g: part === "green" || part === "g",
+    b: part === "blue" || part === "b",
+    a: part === "alpha" || part === "a",
+  };
+}
+
+export function numericParts(value: string): string[] {
+  const text = value.trim();
+  const inner = text.startsWith("{") && text.endsWith("}") ? text.slice(1, -1).trim() : text;
+  if (!inner) return [];
+  const parts = inner.split(/\s+/);
+  return parts.every((part) => /^-?\d+(\.\d+)?$/.test(part)) ? parts : [];
+}
+
+export function cssColor(color: [number, number, number, number]): string {
+  const channel = (value: number) => Math.max(0, Math.min(255, Math.round(value * 255))).toString(16).padStart(2, "0");
+  return `#${channel(color[0])}${channel(color[1])}${channel(color[2])}`;
+}
+
+export function swatchColor(value: string): string | null {
+  const text = value.trim();
+  if (/^#[0-9a-f]{6}$/i.test(text)) return text.toLowerCase();
+  if (/^0x[0-9a-f]{6,8}$/i.test(text)) return `#${text.slice(2, 8)}`;
+  const parts = numericParts(text).map(Number);
+  if (parts.length >= 3 && parts.every((part) => Number.isFinite(part))) {
+    const scale = parts[0]! > 1 || parts[1]! > 1 || parts[2]! > 1 ? 1 : 255;
+    const channel = (part: number) => Math.max(0, Math.min(255, Math.round(part * scale))).toString(16).padStart(2, "0");
+    return `#${channel(parts[0]!)}${channel(parts[1]!)}${channel(parts[2]!)}`;
+  }
+  return null;
+}
+
+export function componentCount(kind: KnobKind): number {
+  if (kind === "wh" || kind === "xy" || kind === "uv" || kind === "vec2" || kind === "scale") return 2;
+  if (kind === "xyz" || kind === "vec3") return 3;
+  if (kind === "bbox" || kind === "vec4") return 4;
+  if (kind === "box3") return 6;
+  return 1;
+}
+
+function appendCustom(tabs: PropertyTab[], knobs: KnobSpec[], node: DagNode) {
+  let current: PropertyTab | null = null;
+  knobs.forEach((knob, index) => {
+    if (TAB_KINDS.has(knob.kind)) {
+      current = { id: `custom-${knob.name || index}`, name: knob.label || "Tab", controls: [] };
+      tabs.push(current);
+      return;
+    }
+    if (!current) {
+      current = { id: "user", name: "User", controls: [] };
+      tabs.push(current);
+    }
+    current.controls.push(apply(node.knobs, knob, 1000 + index));
+  });
+}
+
+function packTabs(classTab: string, controls: PropertyControl[]): PropertyTab[] {
+  const tabs: PropertyTab[] = [];
+  let current: PropertyTab = { id: "class", name: classTab, controls: [] };
+  tabs.push(current);
+  for (const control of controls) {
+    if (TAB_KINDS.has(control.kind)) {
+      current = { id: `tab-${control.id}`, name: control.label || "Tab", controls: [] };
+      tabs.push(current);
+      continue;
+    }
+    current.controls.push(control);
+  }
+  return tabs;
+}
+
+function nodeTab(node: DagNode): PropertyTab {
+  const tile = node.knobs.tile_color ?? cssColor(node.color);
+  const controls = [
+    literal(node, "label", "label", "multilineEval", "", true),
+    literal(node, "note_font", "font", "freetype", "", true),
+    literal(node, "note_font_size", "font size", "array", "11", false),
+    literal(node, "note_font_color", "font color", "colorChip", "0", false),
+    literal(node, "hide_input", "hide input", "bool", "false", true),
+    literal(node, "cached", "cached", "bool", "false", true),
+    literal(node, "disable", "disable", "bool", "false", true),
+    literal(node, "dope_sheet", "dope sheet", "bool", "false", true),
+    literal(node, "bookmark", "bookmark", "bool", "false", true),
+    literal(node, "postage_stamp", "postage stamp", "bool", "false", true),
+    literal(node, "postage_stamp_frame", "frame", "array", "1", false),
+    literal(node, "lifetimeStart", "lifetime start", "array", "0", true),
+    literal(node, "lifetimeEnd", "lifetime end", "array", "0", false),
+    literal(node, "useLifetime", "use lifetime", "bool", "false", false),
+    literal(node, "tile_color", "tile color", "colorChip", tile, true),
+  ];
+  return { id: "node", name: "Node", controls };
+}
+
+function literal(
+  node: DagNode,
+  name: string,
+  label: string,
+  kind: KnobKind,
+  fallback: string,
+  startLine: boolean,
+): PropertyControl {
+  return apply(
+    node.knobs,
+    {
+      name,
+      kind,
+      label,
+      tooltip: "",
+      menu: [],
+      optionLabels: [],
+      link: "",
+      min: null,
+      max: null,
+      startLine,
+      hidden: false,
+      defaultValue: fallback,
+    },
+    name.length,
+  );
+}
+
+function inferControl(name: string, value: string, index: number): PropertyControl {
+  const parts = numericParts(value);
+  const kind: KnobKind = isOn(value) || value === "false" ? "bool" : parts.length > 1 ? "array" : /^-?\d+(\.\d+)?$/.test(value.trim()) ? "float" : "string";
+  return apply(
+    { [name]: value },
+    {
+      name,
+      kind,
+      label: name,
+      tooltip: "",
+      menu: [],
+      optionLabels: [],
+      link: "",
+      min: null,
+      max: null,
+      startLine: true,
+      hidden: false,
+      defaultValue: value,
+    },
+    index,
+  );
+}
+
+function apply(knobs: Record<string, string>, knob: KnobSpec, index: number): PropertyControl {
+  const value = Object.prototype.hasOwnProperty.call(knobs, knob.name) ? (knobs[knob.name] ?? "") : knob.defaultValue;
+  const menus = menuFor(knob, value);
+  return {
+    id: `${knob.name || knob.kind}-${index}`,
+    name: knob.name,
+    kind: knob.kind,
+    label: knob.label,
+    tooltip: knob.link ? `Linked to ${knob.link}` : knob.tooltip,
+    value,
+    options: menus.options,
+    optionLabels: menus.optionLabels,
+    min: knob.min,
+    max: knob.max,
+    checked: isOn(value),
+    channels: channelMask(value),
+    secret: knob.kind === "password",
+    startLine: knob.startLine,
+  };
+}
+
+function menuFor(knob: KnobSpec, value: string): { options: string[]; optionLabels: string[] } {
+  if (knob.menu.length === 0) {
+    return value ? { options: [value], optionLabels: [value] } : { options: [], optionLabels: [] };
+  }
+  const options = [...knob.menu];
+  const optionLabels = knob.optionLabels.length === knob.menu.length ? [...knob.optionLabels] : [...knob.menu];
+  if (value && !options.includes(value)) {
+    options.unshift(value);
+    optionLabels.unshift(value);
+  }
+  return { options, optionLabels };
+}
+
+function rowToSpec(row: KnobRow): KnobSpec {
+  const menu = parseMenu(row[5] ?? "");
+  return {
+    name: row[0],
+    kind: row[1],
+    label: row[2],
+    tooltip: "",
+    menu: menu.values,
+    optionLabels: menu.labels,
+    link: "",
+    min: row[6] ?? null,
+    max: row[7] ?? null,
+    startLine: row[4] === 1,
+    hidden: false,
+    defaultValue: row[3],
+  };
+}
+
+function userSpec(knob: UserKnob): KnobSpec {
+  return {
+    name: knob.name,
+    kind: knob.kind,
+    label: knob.label,
+    tooltip: knob.tooltip,
+    menu: knob.menu,
+    optionLabels: knob.menu,
+    link: knob.link,
+    min: knob.min,
+    max: knob.max,
+    startLine: knob.startLine,
+    hidden: knob.hidden,
+    defaultValue: knob.kind === "bool" || knob.kind === "disable" ? "false" : "",
+  };
+}
+
+function parseMenu(text: string): { values: string[]; labels: string[] } {
+  if (!text) return { values: [], labels: [] };
+  const values: string[] = [];
+  const labels: string[] = [];
+  for (const line of text.split("\n")) {
+    const bits = line.split("\t").filter((bit) => bit.length > 0);
+    if (bits.length === 0) continue;
+    const value = bits[0] ?? "";
+    values.push(value);
+    labels.push(bits[bits.length - 1] ?? value);
+  }
+  return { values, labels };
+}
+
+function isOn(value: string): boolean {
+  const text = value.trim().toLowerCase();
+  return text === "true" || text === "1" || text === "yes" || text === "on";
+}
+
+function tabTitle(className: string): string {
+  if (className === "Merge2") return "Merge";
+  return className;
+}

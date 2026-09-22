@@ -1,23 +1,15 @@
 import { useState } from "react";
 import "./App.css";
 import { NukeDag } from "./NukeDag.tsx";
-import type { DagNode } from "./nuke/scene.ts";
 import { SAMPLE_SCRIPT } from "./nuke/sample.ts";
 
 export function App() {
   const [script, setScript] = useState(SAMPLE_SCRIPT);
-  const [selected, setSelected] = useState<DagNode | null>(null);
 
   return (
     <div className="app">
       <header className="toolbar">
-        <button
-          type="button"
-          onClick={() => {
-            setScript(SAMPLE_SCRIPT);
-            setSelected(null);
-          }}
-        >
+        <button type="button" onClick={() => setScript(SAMPLE_SCRIPT)}>
           Sample
         </button>
         <label className="file">
@@ -28,10 +20,7 @@ export function App() {
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (!file) return;
-              void file.text().then((text) => {
-                setScript(text);
-                setSelected(null);
-              });
+              void file.text().then((text) => setScript(text));
             }}
           />
         </label>
@@ -40,32 +29,10 @@ export function App() {
         <div className="canvas">
           <NukeDag
             script={script}
-            onSelectNode={setSelected}
-            onScriptChange={(next) => {
-              setScript(next);
-              setSelected(null);
-            }}
+            showProperties
+            onScriptChange={(next) => setScript(next)}
           />
         </div>
-        <aside className="inspector">
-          {selected ? (
-            <>
-              <h1>{selected.name}</h1>
-              <p>{selected.className}</p>
-              {selected.graph ? <p>Ctrl+Enter opens this group.</p> : null}
-              <dl>
-                {Object.entries(selected.knobs).map(([key, value]) => (
-                  <div key={key}>
-                    <dt>{key}</dt>
-                    <dd>{value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </>
-          ) : (
-            <p>Open a .nk or .gizmo. Ctrl+Enter steps into a group.</p>
-          )}
-        </aside>
       </div>
     </div>
   );

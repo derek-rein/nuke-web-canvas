@@ -239,19 +239,26 @@ function shapeFragment() {
     const deepDist = std.max(deepSide(input.uv.x, input.uv.y, input.halfX, input.halfY), capDist(input.uv.x, input.uv.y, input.halfX, input.halfY));
     const particleDist = std.max(-input.uv.x - input.halfX, capDist(input.uv.x, input.uv.y, input.halfX, input.halfY));
     const pointDist = pointOutline(input.uv.x, input.uv.y, input.halfX, input.halfY);
+    const inputDist = wedgeOutline(input.uv.x, input.uv.y, input.halfX, input.halfY, 1);
+    const outputDist = wedgeOutline(input.uv.x, input.uv.y, input.halfX, input.halfY, 0);
+    const diamondDist = diamondOutline(input.uv.x, input.uv.y, input.halfX, input.halfY);
     const shaped = std.select(rectDist, circleDist, circleLike);
     const withDeep = std.select(shaped, deepDist, std.abs(input.mode - 6) < 0.5);
     const withPoint = std.select(withDeep, pointDist, std.abs(input.mode - 7) < 0.5);
-    const dist = std.select(withPoint, particleDist, std.abs(input.mode - 8) < 0.5);
+    const withParticle = std.select(withPoint, particleDist, std.abs(input.mode - 8) < 0.5);
+    const withInput = std.select(withParticle, inputDist, std.abs(input.mode - 9) < 0.5);
+    const withOutput = std.select(withInput, outputDist, std.abs(input.mode - 10) < 0.5);
+    const dist = std.select(withOutput, diamondDist, std.abs(input.mode - 11) < 0.5);
     const aa = std.fwidth(dist);
     const coverage = 1 - std.smoothstep(0 - aa, aa, dist);
     const yNorm = input.uv.y / std.max(input.halfY, 1);
     // yNorm is -1 at the top of the body. Nuke's shade leaves the top at the tile color
     // and darkens the bottom to about 0.76, measured on the Draw swatch of the color chart.
     const shade = 1 - (yNorm + 1) * 0.12;
-    const lit = std.select(1, shade, body);
+    const shaded = std.select(body, false, std.abs(input.mode - 11) < 0.5);
+    const lit = std.select(1, shade, shaded);
     const rim = std.smoothstep(-1.4, -0.2, dist);
-    const rimMul = std.select(1, 1 - rim * 0.22, body);
+    const rimMul = std.select(1, 1 - rim * 0.22, shaded);
     const red = input.color.x * lit * rimMul;
     const green = input.color.y * lit * rimMul;
     const blue = input.color.z * lit * rimMul;
@@ -289,7 +296,7 @@ function edgeOutside(px: number, py: number, ax: number, ay: number, bx: number,
 
 function pointOutline(px: number, py: number, halfX: number, halfY: number): number {
   "use gpu";
-  const inset = halfY * 1.15;
+  const inset = std.min(halfY * 0.5, halfX * 0.45);
   const topLeftX = -halfX + inset;
   const topRightX = halfX - inset;
   const top = edgeOutside(px, py, topLeftX, -halfY, topRightX, -halfY);
@@ -299,6 +306,31 @@ function pointOutline(px: number, py: number, halfX: number, halfY: number): num
   const lowerLeft = edgeOutside(px, py, topLeftX, halfY, -halfX, 0);
   const upperLeft = edgeOutside(px, py, -halfX, 0, topLeftX, -halfY);
   return std.max(top, std.max(upperRight, std.max(lowerRight, std.max(bottom, std.max(lowerLeft, upperLeft)))));
+}
+
+function wedgeOutline(px: number, py: number, halfX: number, halfY: number, narrowBottom: number): number {
+  "use gpu";
+  const inset = std.min(halfY, halfX * 0.85);
+  const topInset = std.select(inset, 0, narrowBottom > 0.5);
+  const botInset = std.select(0, inset, narrowBottom > 0.5);
+  const topLeftX = -halfX + topInset;
+  const topRightX = halfX - topInset;
+  const botLeftX = -halfX + botInset;
+  const botRightX = halfX - botInset;
+  const top = edgeOutside(px, py, topLeftX, -halfY, topRightX, -halfY);
+  const right = edgeOutside(px, py, topRightX, -halfY, botRightX, halfY);
+  const bottom = edgeOutside(px, py, botRightX, halfY, botLeftX, halfY);
+  const left = edgeOutside(px, py, botLeftX, halfY, topLeftX, -halfY);
+  return std.max(top, std.max(right, std.max(bottom, left)));
+}
+
+function diamondOutline(px: number, py: number, halfX: number, halfY: number): number {
+  "use gpu";
+  const right = edgeOutside(px, py, halfX, 0, 0, halfY);
+  const bottom = edgeOutside(px, py, 0, halfY, -halfX, 0);
+  const left = edgeOutside(px, py, -halfX, 0, 0, -halfY);
+  const top = edgeOutside(px, py, 0, -halfY, halfX, 0);
+  return std.max(right, std.max(bottom, std.max(left, top)));
 }
 
 function roundRectDistance(px: number, py: number, halfX: number, halfY: number, radius: number): number {
