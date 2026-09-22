@@ -1,5 +1,7 @@
 node_modules
 dist
+storybook-static
+*storybook.log
 .superpowers
 .DS_Store
 *.local
