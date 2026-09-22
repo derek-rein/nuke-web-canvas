@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, JSX, PointerEvent as ReactPointerEvent } from "react";
-import { createNukeRenderer, type Camera, type NukeRenderer } from "./gpu/renderer.ts";
+import { createNukeRenderer, type NukeRenderer } from "./gpu/renderer.ts";
+import type { Camera } from "./nuke/view.ts";
 import { hitTest } from "./nuke/hitTest.ts";
 import {
   MINIMAP_HEIGHT,
@@ -18,6 +19,7 @@ import { replacementScript } from "./nuke/paste.ts";
 import { parseNukeScript } from "./nuke/parse.ts";
 import { neighborId, nodesInRect, selectionBounds, toggleId, upstreamIds } from "./nuke/select.ts";
 import { buildScene, type DagNode, type DagScene } from "./nuke/scene.ts";
+import { dragZoom, fitCamera, panCamera, wheelDeltaPixels, wheelZoom, zoomAbout } from "./nuke/view.ts";
 import { measureDagText } from "./gpu/textAtlas.ts";
 
 const DRAG_THRESHOLD_PX = 4;
@@ -42,6 +44,8 @@ export function NukeDag(props: {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const selectedIdsRef = useRef<string[]>([]);
   const endGesture = useRef<(() => void) | null>(null);
+  const buttonsDown = useRef(new Set<number>());
+  const lastPointer = useRef<{ x: number; y: number } | null>(null);
   const [ready, setReady] = useState(false);
   const [marquee, setMarquee] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [mapVisible, setMapVisible] = useState(false);
@@ -169,13 +173,10 @@ export function NukeDag(props: {
     const wheel = (event: WheelEvent) => {
       event.preventDefault();
       const rect = canvas.getBoundingClientRect();
-      const camera = cameraRef.current;
       const sx = event.clientX - rect.left;
       const sy = event.clientY - rect.top;
-      const dagX = camera.x + sx / camera.zoom;
-      const dagY = camera.y + sy / camera.zoom;
-      const zoom = clamp(camera.zoom * Math.exp(-event.deltaY * 0.0015), 0.05, 8);
-      cameraRef.current = { x: dagX - sx / zoom, y: dagY - sy / zoom, zoom };
+      const delta = wheelDeltaPixels(event.deltaY, event.deltaMode, rect.height);
+      cameraRef.current = wheelZoom(cameraRef.current, sx, sy, delta);
       renderer.setCamera(cameraRef.current);
       renderer.draw();
       refreshMinimapRef.current();
@@ -234,19 +235,30 @@ export function NukeDag(props: {
 
   function zoomBy(factor: number) {
     const wrap = wrapRef.current;
-    const renderer = rendererRef.current;
-    if (!wrap || !renderer) return;
+    if (!wrap) return;
     const rect = wrap.getBoundingClientRect();
-    const camera = cameraRef.current;
-    const sx = rect.width / 2;
-    const sy = rect.height / 2;
-    const dagX = camera.x + sx / camera.zoom;
-    const dagY = camera.y + sy / camera.zoom;
-    const zoom = clamp(camera.zoom * factor, 0.05, 8);
-    cameraRef.current = { x: dagX - sx / zoom, y: dagY - sy / zoom, zoom };
-    renderer.setCamera(cameraRef.current);
-    renderer.draw();
-    refreshMinimapRef.current();
+    const pointer = lastPointer.current;
+    const rawX = pointer ? pointer.x - rect.left : rect.width / 2;
+    const rawY = pointer ? pointer.y - rect.top : rect.height / 2;
+    const inside = rawX >= 0 && rawY >= 0 && rawX <= rect.width && rawY <= rect.height;
+    cameraRef.current = zoomAbout(
+      cameraRef.current,
+      inside ? rawX : rect.width / 2,
+      inside ? rawY : rect.height / 2,
+      cameraRef.current.zoom * factor,
+    );
+    draw();
+  }
+
+  function frameView() {
+    if (!current || !wrapRef.current) return;
+    const chosen = new Set(selectedIdsRef.current);
+    const picked = current.nodes.filter((node) => chosen.has(node.id));
+    const focus = selectionBounds(picked.length > 0 ? picked : current.nodes);
+    if (!focus) return;
+    const rect = wrapRef.current.getBoundingClientRect();
+    cameraRef.current = fitCamera(focus, rect.width, rect.height);
+    draw();
   }
 
   function clientToDag(clientX: number, clientY: number): { x: number; y: number } | null {
@@ -269,17 +281,27 @@ export function NukeDag(props: {
     const wrap = wrapRef.current;
     if (!canvas || !wrap || !current) return;
     if (event.button !== 0 && event.button !== 1) return;
+    buttonsDown.current.add(event.button);
+    lastPointer.current = { x: event.clientX, y: event.clientY };
     wrap.focus({ preventScroll: true });
-    if (event.button === 1) event.preventDefault();
+    if (event.button === 1 || event.altKey) event.preventDefault();
     canvas.setPointerCapture(event.pointerId);
     const startX = event.clientX;
     const startY = event.clientY;
     const origin = { ...cameraRef.current };
     const scene = current;
-    const pan = event.button === 1 || event.altKey;
+    const rect = canvas.getBoundingClientRect();
+    const anchorSx = startX - rect.left;
+    const anchorSy = startY - rect.top;
+    const chordZoom = buttonsDown.current.has(0) && buttonsDown.current.has(1);
+    const altMiddleZoom = event.button === 1 && event.altKey;
+    const zoom = chordZoom || altMiddleZoom;
+    const pan = !zoom && (event.button === 1 || (event.button === 0 && event.altKey));
+    const frameOnRelease = event.button === 1 && !event.altKey && !chordZoom;
     let dragged = false;
     let settled = false;
     endGesture.current?.();
+    setMarquee(null);
 
     const stop = () => {
       settled = true;
@@ -292,29 +314,32 @@ export function NukeDag(props: {
 
     function move(ev: PointerEvent) {
       if (settled) return;
+      lastPointer.current = { x: ev.clientX, y: ev.clientY };
       const dx = ev.clientX - startX;
       const dy = ev.clientY - startY;
-      if (pan) {
-        cameraRef.current = {
-          x: origin.x - dx / origin.zoom,
-          y: origin.y - dy / origin.zoom,
-          zoom: origin.zoom,
-        };
+      if (Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) dragged = true;
+      if (zoom) {
+        cameraRef.current = dragZoom(origin, anchorSx, anchorSy, dx);
         draw();
         return;
       }
-      if (Math.hypot(dx, dy) <= DRAG_THRESHOLD_PX) return;
-      dragged = true;
-      const rect = wrap!.getBoundingClientRect();
+      if (pan) {
+        cameraRef.current = panCamera(origin, dx, dy);
+        draw();
+        return;
+      }
+      if (!dragged) return;
+      const box = wrap!.getBoundingClientRect();
       setMarquee({
-        left: Math.min(startX, ev.clientX) - rect.left,
-        top: Math.min(startY, ev.clientY) - rect.top,
+        left: Math.min(startX, ev.clientX) - box.left,
+        top: Math.min(startY, ev.clientY) - box.top,
         width: Math.abs(ev.clientX - startX),
         height: Math.abs(ev.clientY - startY),
       });
     }
 
     function up(ev: PointerEvent) {
+      buttonsDown.current.delete(ev.button);
       if (settled) return;
       settled = true;
       if (ev.type === "pointerup" && Math.hypot(ev.clientX - startX, ev.clientY - startY) > DRAG_THRESHOLD_PX) {
@@ -322,7 +347,11 @@ export function NukeDag(props: {
       }
       stop();
       setMarquee(null);
-      if (pan || ev.type === "pointercancel") return;
+      if (zoom || ev.type === "pointercancel") return;
+      if (pan) {
+        if (frameOnRelease && !dragged) frameView();
+        return;
+      }
       if (!dragged) {
         const dag = clientToDag(startX, startY);
         const hit = dag ? hitTest(scene, dag.x, dag.y) : null;
@@ -416,6 +445,12 @@ export function NukeDag(props: {
         clearSelection();
         props.onScriptChange?.(next);
       }}
+      onPointerMove={(event) => {
+        lastPointer.current = { x: event.clientX, y: event.clientY };
+      }}
+      onAuxClick={(event) => {
+        if (event.button === 1) event.preventDefault();
+      }}
       onKeyDownCapture={(event) => {
         if (!current || !wrapRef.current) return;
         if (isEnterGroupKey(event)) {
@@ -449,11 +484,8 @@ export function NukeDag(props: {
           return;
         }
         if (event.key === "f" || event.key === "F") {
-          const rect = wrapRef.current.getBoundingClientRect();
-          const chosen = new Set(selectedIdsRef.current);
-          const focus = selectionBounds(current.nodes.filter((node) => chosen.has(node.id))) ?? current.bounds;
-          cameraRef.current = fitCamera(focus, rect.width, rect.height);
-          draw();
+          event.preventDefault();
+          frameView();
           return;
         }
         if (event.key === "+" || event.key === "=") {
@@ -613,31 +645,6 @@ function crumbsFor(root: DagScene | null, path: string[]): Array<{ id: string; n
     current = node.graph;
   }
   return crumbs;
-}
-
-function fitCamera(
-  rect: { x: number; y: number; w: number; h: number },
-  cssWidth: number,
-  cssHeight: number,
-): Camera {
-  const padding = 48;
-  const width = Math.max(rect.w, 1);
-  const height = Math.max(rect.h, 1);
-  const zoom = clamp(
-    Math.min((cssWidth - padding * 2) / width, (cssHeight - padding * 2) / height),
-    0.05,
-    2,
-  );
-  return {
-    x: rect.x + rect.w / 2 - cssWidth / zoom / 2,
-    y: rect.y + rect.h / 2 - cssHeight / zoom / 2,
-    zoom,
-  };
-}
-
-function clamp(value: number, min: number, max: number): number {
-  if (!Number.isFinite(value)) return 1;
-  return Math.min(max, Math.max(min, value));
 }
 
 function unionIds(ids: readonly string[], extra: readonly string[]): string[] {

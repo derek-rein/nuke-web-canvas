@@ -125,7 +125,7 @@ export const Sample: Story = {
     docs: {
       description: {
         story:
-          "Paste a .nk or .gizmo to replace the graph. Drag to select nodes, Shift to add, Ctrl+A to select every node, and Alt-drag to pan. Scroll or +/- to zoom, and press F to fit the selection or the whole graph. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. Requires WebGPU.",
+          "Paste a .nk or .gizmo to replace the graph. Middle-drag or Alt-drag pans. The scroll wheel, +/-, or Alt+middle-drag zooms around the cursor. F or a middle-click frames the selection, or the whole graph when nothing is selected. Drag to select nodes, Shift to add, Ctrl+A to select every node. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. Requires WebGPU.",
       },
     },
   },

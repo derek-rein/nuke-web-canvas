@@ -167,6 +167,33 @@ Merge2 {
   expect(mask?.to.x).toBe(merge.x + merge.w);
 });
 
+test("pills and deep nodes use the same bar width as a 2D node", () => {
+  const scene = sceneOf(`
+Blur {
+ inputs 0
+ name NodeA
+ xpos 0
+ ypos 0
+}
+DeepRead {
+ inputs 0
+ name NodeB
+ xpos 0
+ ypos 40
+}
+GeoCard {
+ inputs 0
+ name NodeC
+ xpos 0
+ ypos 80
+}
+`);
+  const width = (name: string) => nodeNamed(scene.nodes, name).w;
+  expect(width("NodeB")).toBe(width("NodeA"));
+  expect(width("NodeC")).toBe(width("NodeA"));
+  expect(nodeNamed(scene.nodes, "NodeA").bodyH).toBe(18);
+});
+
 test("tile colors override class defaults", () => {
   const scene = sceneOf(`
 Constant {

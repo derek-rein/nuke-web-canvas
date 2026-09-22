@@ -311,11 +311,10 @@ function sizeOf(
   const bodyH = lines.length <= 1 ? 18 : 18 + (lines.length - 1) * 12;
   const stamp = postage ? 46 : 0;
   if (shape === "circle") {
-    const diameter = Math.max(36, bodyH, Math.ceil(textWidth + 22));
+    const diameter = Math.max(52, bodyH, Math.ceil(textWidth + 10));
     return { w: diameter, h: diameter + stamp, bodyH: diameter, stamp };
   }
-  const cap = shape === "rect" ? 0 : Math.ceil(bodyH * 1.2);
-  const w = Math.max(80, Math.ceil(textWidth + 16)) + cap;
+  const w = Math.max(80, Math.ceil(textWidth + 16));
   return { w, h: bodyH + stamp, bodyH, stamp };
 }
 
