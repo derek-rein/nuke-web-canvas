@@ -194,9 +194,9 @@ Blur {
   expect(nodeNamed(scene.nodes, "Decimal").color).toEqual([1, 0, 0, 1]);
   expect(parseTileColor("4278190335")).toEqual([1, 0, 0, 1]);
   const blur = nodeNamed(scene.nodes, "Blur1").color;
-  expect(blur[0]).toBeCloseTo(0xa9 / 255);
-  expect(blur[1]).toBeCloseTo(0x68 / 255);
-  expect(blur[2]).toBeCloseTo(0x3a / 255);
+  expect(blur[0]).toBeCloseTo(0xb4 / 255);
+  expect(blur[1]).toBeCloseTo(0x73 / 255);
+  expect(blur[2]).toBeCloseTo(0x49 / 255);
   expect(blur[3]).toBe(1);
 });
 

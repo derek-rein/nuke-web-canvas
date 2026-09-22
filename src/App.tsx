@@ -41,6 +41,10 @@ export function App() {
           <NukeDag
             script={script}
             onSelectNode={setSelected}
+            onScriptChange={(next) => {
+              setScript(next);
+              setSelected(null);
+            }}
           />
         </div>
         <aside className="inspector">

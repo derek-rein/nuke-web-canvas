@@ -35,7 +35,7 @@ const meta = {
   parameters: { layout: "fullscreen" },
   decorators: [
     (Story) => (
-      <div style={{ height: "100vh", background: "#555555" }}>
+      <div style={{ height: "100vh", background: "#3c3c3c" }}>
         <Story />
       </div>
     ),
@@ -52,7 +52,7 @@ export const Sample: Story = {
     docs: {
       description: {
         story:
-          "Drag to select nodes, Shift to add, Ctrl+A to select every node, and Alt-drag to pan. Scroll or +/- to zoom, and press F to fit the selection or the whole graph. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. Requires WebGPU.",
+          "Paste a .nk or .gizmo to replace the graph. Drag to select nodes, Shift to add, Ctrl+A to select every node, and Alt-drag to pan. Scroll or +/- to zoom, and press F to fit the selection or the whole graph. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. Requires WebGPU.",
       },
     },
   },

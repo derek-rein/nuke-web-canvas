@@ -44,9 +44,12 @@ const MODE_SOLID = 0;
 const MODE_ROUND = 1;
 const MODE_CIRCLE = 2;
 const MODE_GLYPH = 3;
+const MODE_BODY = 4;
 const TEXT_ZOOM = 0.28;
-const EXPRESSION_LINK: [number, number, number, number] = [0x6c / 255, 0xbe / 255, 0x6c / 255, 1];
+const EXPRESSION_LINK: [number, number, number, number] = [0x71 / 255, 0xc9 / 255, 0x73 / 255, 1];
 const CLONE_LINK: [number, number, number, number] = [0xe8 / 255, 0x78 / 255, 0x30 / 255, 1];
+const PIPE_DOWN: [number, number, number, number] = [0xe6 / 255, 0xae / 255, 0x51 / 255, 1];
+const PIPE_OTHER: [number, number, number, number] = [0, 0, 0, 1];
 const CLONE_BADGE: [number, number, number, number] = [0xe0 / 255, 0x70 / 255, 0x20 / 255, 1];
 const CHANNELS: Array<[number, number, number, number]> = [
   [0xe2 / 255, 0x3b / 255, 0x3b / 255, 1],
@@ -102,7 +105,7 @@ function pushNode(vertices: Vertex[], node: DagNode): void {
   if (node.postage) {
     pushRoundRect(vertices, node.x, node.y, node.w, 46, [0.12, 0.12, 0.12, 1], 2);
   }
-  pushRoundRect(vertices, node.x, node.bodyY, node.w, node.bodyH, node.color, 3);
+  pushQuad(vertices, node.x, node.bodyY, node.w, node.bodyH, node.color, MODE_BODY, 2);
   pushChannels(vertices, node);
 }
 
@@ -149,7 +152,7 @@ function pushPipe(
 ): void {
   const samples = pipeSamples(from, to, 20);
   const width = 2;
-  const color: [number, number, number, number] = [0, 0, 0, 1];
+  const color = pipeColor(from, to);
   for (let index = 0; index < samples.length - 1; index += 1) {
     const a = samples[index];
     const b = samples[index + 1];
@@ -273,6 +276,15 @@ function edgeNormal(edge: Point, outward: Point, rect: BodyRect): Point {
     }
   }
   return best;
+}
+
+function pipeColor(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+): [number, number, number, number] {
+  const dx = Math.abs(to.x - from.x);
+  const dy = to.y - from.y;
+  return dy > dx ? PIPE_DOWN : PIPE_OTHER;
 }
 
 function pushSegment(

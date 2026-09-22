@@ -152,7 +152,7 @@ export async function createNukeRenderer(
       shapePipeline
         ?.withColorAttachment({
           view: context,
-          clearValue: [85 / 255, 85 / 255, 85 / 255, 1],
+          clearValue: [0x3c / 255, 0x3c / 255, 0x3c / 255, 1],
           loadOp: "clear",
           storeOp: "store",
         })
@@ -161,7 +161,7 @@ export async function createNukeRenderer(
       glyphPipeline
         .withColorAttachment({
           view: context,
-          clearValue: [85 / 255, 85 / 255, 85 / 255, 1],
+          clearValue: [0x3c / 255, 0x3c / 255, 0x3c / 255, 1],
           loadOp: shapePipeline ? "load" : "clear",
           storeOp: "store",
         })
@@ -234,11 +234,22 @@ function shapeFragment() {
     "use gpu";
     const rectDist = roundRectDistance(input.uv.x, input.uv.y, input.halfX, input.halfY, input.radius);
     const circleDist = std.sqrt(input.uv.x * input.uv.x + input.uv.y * input.uv.y) - input.radius;
-    const dist = std.select(circleDist, rectDist, input.mode < 1.5);
+    const body = input.mode > 3.5;
+    const useRect = std.select(input.mode < 1.5, true, body);
+    const dist = std.select(circleDist, rectDist, useRect);
     const aa = std.fwidth(dist);
     const coverage = 1 - std.smoothstep(0 - aa, aa, dist);
+    const yNorm = input.uv.y / std.max(input.halfY, 1);
+    const shade = 1.18 - (yNorm + 1) * 0.2;
+    const lit = std.select(1, shade, body);
+    const rim = std.smoothstep(-2.2, -0.3, dist);
+    const rimMul = std.select(1, 1 - rim * 0.35, body);
+    const highlight = std.select(0, 1 - std.smoothstep(-0.95, -0.45, yNorm), body);
+    const red = std.min(1, input.color.x * lit * rimMul + highlight * 0.22);
+    const green = std.min(1, input.color.y * lit * rimMul + highlight * 0.22);
+    const blue = std.min(1, input.color.z * lit * rimMul + highlight * 0.22);
     const alpha = std.select(input.color.w * coverage, input.color.w, input.mode < 0.5);
-    return d.vec4f(input.color.x, input.color.y, input.color.z, alpha);
+    return d.vec4f(red, green, blue, alpha);
   });
 }
 

@@ -14,6 +14,7 @@ import {
   type MinimapFrame,
 } from "./nuke/minimap.ts";
 import { enterGroupPath, isEnterGroupKey, isLeaveGroupKey, leaveGroupPath } from "./nuke/navigate.ts";
+import { replacementScript } from "./nuke/paste.ts";
 import { parseNukeScript } from "./nuke/parse.ts";
 import { neighborId, nodesInRect, selectionBounds, toggleId, upstreamIds } from "./nuke/select.ts";
 import { buildScene, type DagNode, type DagScene } from "./nuke/scene.ts";
@@ -26,6 +27,7 @@ export function NukeDag(props: {
   className?: string;
   style?: CSSProperties;
   onSelectNode?: (node: DagNode | null) => void;
+  onScriptChange?: (script: string) => void;
 }): JSX.Element {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -36,6 +38,7 @@ export function NukeDag(props: {
   const [gpuError, setGpuError] = useState<string | null>(null);
   const [gpuState, setGpuState] = useState<"loading" | "ready" | "drawn" | "error">("loading");
   const [path, setPath] = useState<string[]>([]);
+  const [overrideScript, setOverrideScript] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const selectedIdsRef = useRef<string[]>([]);
   const endGesture = useRef<(() => void) | null>(null);
@@ -46,14 +49,15 @@ export function NukeDag(props: {
   const sceneRef = useRef<DagScene | null>(null);
   const refreshMinimapRef = useRef<() => void>(() => {});
 
+  const script = overrideScript ?? props.script;
   const parsed = useMemo(() => {
     try {
-      return { scene: buildScene(parseNukeScript(props.script), measureDagText), error: null as string | null };
+      return { scene: buildScene(parseNukeScript(script), measureDagText), error: null as string | null };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not parse the Nuke script";
       return { scene: null, error: message };
     }
-  }, [props.script]);
+  }, [script]);
 
   const current = parsed.scene ? sceneAt(parsed.scene, path) : null;
   const crumbs = useMemo(() => crumbsFor(parsed.scene, path), [parsed.scene, path]);
@@ -78,6 +82,7 @@ export function NukeDag(props: {
   useEffect(() => {
     cameras.current.clear();
     fittedScene.current = null;
+    setOverrideScript(null);
     cancelGesture();
     setPath([]);
   }, [props.script]);
@@ -400,6 +405,17 @@ export function NukeDag(props: {
       className={props.className}
       data-gpu={gpuState}
       tabIndex={0}
+      onPaste={(event) => {
+        const next = replacementScript(event.clipboardData.getData("text/plain"));
+        if (!next) return;
+        event.preventDefault();
+        event.stopPropagation();
+        setOverrideScript(next);
+        cancelGesture();
+        setPath([]);
+        clearSelection();
+        props.onScriptChange?.(next);
+      }}
       onKeyDownCapture={(event) => {
         if (!current || !wrapRef.current) return;
         if (isEnterGroupKey(event)) {
@@ -454,7 +470,7 @@ export function NukeDag(props: {
         position: "relative",
         width: "100%",
         height: "100%",
-        background: "#555555",
+        background: "#3c3c3c",
         outline: "none",
         overflow: "hidden",
         ...props.style,

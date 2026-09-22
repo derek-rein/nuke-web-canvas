@@ -36,7 +36,7 @@ Grade {
 }
 `);
   const vertices = buildGeometry(scene, 1, null, null);
-  const body = vertices.filter((vertex) => vertex.mode === 1);
+  const body = vertices.filter((vertex) => vertex.mode === 4);
   expect(body.length).toBeGreaterThan(0);
   for (const vertex of body) {
     expect(vertex.x).toBeGreaterThanOrEqual(9);
@@ -81,7 +81,14 @@ Grade {
   const to = { x: grade!.x + grade!.w / 2, y: grade!.bodyY };
   expect(vertices.some((vertex) => Math.hypot(vertex.x - from.x, vertex.y - from.y) <= 2)).toBe(true);
   expect(vertices.some((vertex) => Math.hypot(vertex.x - to.x, vertex.y - to.y) <= 2)).toBe(true);
-  expect(vertices.some((vertex) => vertex.r === 0 && vertex.g === 0 && vertex.b === 0)).toBe(true);
+  expect(
+    vertices.some(
+      (vertex) =>
+        Math.abs(vertex.r - 0xe6 / 255) <= 0.01 &&
+        Math.abs(vertex.g - 0xae / 255) <= 0.01 &&
+        Math.abs(vertex.b - 0x51 / 255) <= 0.01,
+    ),
+  ).toBe(true);
   expect(vertices.some((vertex) => vertex.r === 0.78 && vertex.g === 0.78 && vertex.b === 0.78)).toBe(false);
 });
 
@@ -213,9 +220,9 @@ Blur {
   expect(target).toBeTruthy();
   const green = buildGeometry(scene, 1, null, null).filter(
     (vertex) =>
-      Math.abs(vertex.r - 0x6c / 255) <= 0.01 &&
-      Math.abs(vertex.g - 0xbe / 255) <= 0.01 &&
-      Math.abs(vertex.b - 0x6c / 255) <= 0.01,
+      Math.abs(vertex.r - 0x71 / 255) <= 0.01 &&
+      Math.abs(vertex.g - 0xc9 / 255) <= 0.01 &&
+      Math.abs(vertex.b - 0x73 / 255) <= 0.01,
   );
   // The arrow triangle is emitted after the shaft.
   const head = green.slice(-3);
@@ -265,7 +272,7 @@ clone $Ng {
   const vertices = buildGeometry(scene, 1, null, null);
   const expression = vertices.find(
     (vertex) =>
-      Math.abs(vertex.r - 0x6c / 255) <= 0.01 && Math.abs(vertex.g - 0xbe / 255) <= 0.01,
+      Math.abs(vertex.r - 0x71 / 255) <= 0.01 && Math.abs(vertex.g - 0xc9 / 255) <= 0.01,
   );
   expect(expression).toBeTruthy();
   const cloneLink = vertices.find((vertex) => Math.abs(vertex.r - 0xe8 / 255) <= 0.01);
