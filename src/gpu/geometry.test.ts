@@ -266,7 +266,7 @@ clone $Ng {
   expect(name.every((vertex) => vertex.x >= clone!.x)).toBe(true);
 });
 
-test("selection adds an orange outline only for the selected id", () => {
+test("selection outlines every selected id and skips the rest", () => {
   const scene = sceneOf(`
 Grade {
  inputs 0
@@ -274,12 +274,40 @@ Grade {
  xpos 0
  ypos 0
 }
+Grade {
+ inputs 0
+ name Grade2
+ xpos 200
+ ypos 0
+}
+Grade {
+ inputs 0
+ name Grade3
+ xpos 400
+ ypos 0
+}
 `);
-  const id = scene.nodes[0]!.id;
-  const plain = buildGeometry(scene, 1, null, null);
-  const selected = buildGeometry(scene, 1, null, id);
+  const grade1 = scene.nodes.find((node) => node.name === "Grade1");
+  const grade2 = scene.nodes.find((node) => node.name === "Grade2");
+  const grade3 = scene.nodes.find((node) => node.name === "Grade3");
+  expect(grade1 && grade2 && grade3).toBeTruthy();
   const orange = (vertex: { r: number; g: number; b: number }) =>
     vertex.r === 0.98 && vertex.g === 0.6 && vertex.b === 0;
-  expect(plain.some(orange)).toBe(false);
-  expect(selected.some(orange)).toBe(true);
+  const around = (node: { x: number; y: number; w: number; h: number }) => {
+    const x0 = node.x - 4;
+    const y0 = node.y - 4;
+    const x1 = node.x + node.w + 4;
+    const y1 = node.y + node.h + 4;
+    return (vertex: { x: number; y: number }) =>
+      vertex.x >= x0 && vertex.x <= x1 && vertex.y >= y0 && vertex.y <= y1;
+  };
+  expect(buildGeometry(scene, 1, null, null).some(orange)).toBe(false);
+  expect(buildGeometry(scene, 1, null, new Set<string>()).some(orange)).toBe(false);
+  const marks = buildGeometry(scene, 1, null, new Set([grade1!.id, grade2!.id])).filter(orange);
+  const first = marks.filter(around(grade1!));
+  const second = marks.filter(around(grade2!));
+  expect(first.length).toBeGreaterThan(0);
+  expect(second.length).toBe(first.length);
+  expect(marks.filter(around(grade3!)).length).toBe(0);
+  expect(first.length + second.length).toBe(marks.length);
 });

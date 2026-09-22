@@ -59,7 +59,7 @@ export function buildGeometry(
   scene: DagScene,
   zoom: number,
   atlas: GlyphLookup | null,
-  selectedId: string | null,
+  selectedIds: ReadonlySet<string> | null,
 ): Vertex[] {
   const vertices: Vertex[] = [];
   const backdrops = scene.nodes
@@ -84,7 +84,9 @@ export function buildGeometry(
     if (node.cloneOf && node.kind === "node") pushCloneBadge(vertices, node);
     if (node.disabled) pushCross(vertices, node);
     if (node.cloneOf && node.kind === "node" && atlas && zoom >= TEXT_ZOOM) pushCloneMark(vertices, node, atlas);
-    if (selectedId === node.id) pushSelection(vertices, node);
+  }
+  for (const node of scene.nodes) {
+    if (selectedIds?.has(node.id)) pushSelection(vertices, node);
   }
   if (atlas && zoom >= TEXT_ZOOM) {
     for (const node of scene.nodes) pushText(vertices, node, atlas);

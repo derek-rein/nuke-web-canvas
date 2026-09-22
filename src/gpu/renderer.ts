@@ -9,7 +9,7 @@ export type NukeRenderer = {
   resize(cssWidth: number, cssHeight: number, dpr: number): void;
   setScene(scene: DagScene): void;
   setCamera(camera: Camera): void;
-  setSelected(id: string | null): void;
+  setSelected(ids: readonly string[]): void;
   draw(): void;
   destroy(): void;
 };
@@ -60,7 +60,7 @@ export async function createNukeRenderer(
 
   let scene: DagScene | null = null;
   let camera: Camera = { x: 0, y: 0, zoom: 1 };
-  let selectedId: string | null = null;
+  let selectedIds: ReadonlySet<string> = new Set();
   let dpr = 1;
   let geometryKey = "";
   let shapeCount = 0;
@@ -171,9 +171,10 @@ export async function createNukeRenderer(
 
   function ensureGeometry(): void {
     if (!scene) return;
-    const key = `${scene.id}:${camera.zoom.toFixed(3)}:${selectedId ?? ""}`;
+    const selectedKey = [...selectedIds].sort().join("\0");
+    const key = `${scene.id}:${camera.zoom.toFixed(3)}:${selectedKey}`;
     if (key === geometryKey && drawFrame) return;
-    const vertices = buildGeometry(scene, camera.zoom, atlas, selectedId);
+    const vertices = buildGeometry(scene, camera.zoom, atlas, selectedIds);
     if (atlas.dirty.value) {
       atlasTexture.write(atlas.canvas);
       atlas.dirty.value = false;
@@ -197,8 +198,8 @@ export async function createNukeRenderer(
       camera = next;
       if (bandChanged) geometryKey = "";
     },
-    setSelected(id) {
-      selectedId = id;
+    setSelected(ids) {
+      selectedIds = new Set(ids);
       geometryKey = "";
     },
     draw() {

@@ -52,7 +52,7 @@ export const Sample: Story = {
     docs: {
       description: {
         story:
-          "Drag to pan, scroll or +/- to zoom, and press F to fit the selection or the whole graph. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. Requires WebGPU.",
+          "Drag to select nodes, Shift to add, Ctrl+A to select every node, and Alt-drag to pan. Scroll or +/- to zoom, and press F to fit the selection or the whole graph. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. Requires WebGPU.",
       },
     },
   },
