@@ -1,4 +1,5 @@
 import { classHasMask } from "../nuke/catalog.ts";
+import { channelIndicators } from "../nuke/channels.ts";
 import {
   LABEL_PAD,
   labelLineHeight,
@@ -56,12 +57,7 @@ const CLONE_LINK: [number, number, number, number] = [0xe8 / 255, 0x78 / 255, 0x
 const PIPE_DOWN: [number, number, number, number] = [0xe6 / 255, 0xae / 255, 0x51 / 255, 1];
 const PIPE_OTHER: [number, number, number, number] = [0, 0, 0, 1];
 const CLONE_BADGE: [number, number, number, number] = [0xe0 / 255, 0x70 / 255, 0x20 / 255, 1];
-const CHANNELS: Array<[number, number, number, number]> = [
-  [0xe2 / 255, 0x3b / 255, 0x3b / 255, 1],
-  [0x3c / 255, 0xba / 255, 0x3c / 255, 1],
-  [0x3c / 255, 0x6f / 255, 0xe2 / 255, 1],
-  [0xf2 / 255, 0xf2 / 255, 0xf2 / 255, 1],
-];
+
 
 export function buildGeometry(
   scene: DagScene,
@@ -435,14 +431,15 @@ function pushPipeLabel(vertices: Vertex[], pipe: Pipe, atlas: GlyphLookup): void
 }
 
 function pushChannels(vertices: Vertex[], node: DagNode): void {
+  const channels = channelIndicators(node.className, node.knobs);
+  if (channels.length === 0) return;
   const width = 4;
   const height = 3;
   const gap = 1;
-  const total = CHANNELS.length * width + (CHANNELS.length - 1) * gap;
+  const total = channels.length * width + (channels.length - 1) * gap;
   const left = node.x + (node.w - total) / 2;
-  const lift = node.shape === "circle" ? 8 : 0;
-  const top = node.bodyY + node.bodyH - height - lift;
-  for (const [index, color] of CHANNELS.entries()) {
+  const top = node.bodyY + node.bodyH - height - 1;
+  for (const [index, color] of channels.entries()) {
     pushQuad(vertices, left + index * (width + gap), top, width, height, color, MODE_SOLID, 0);
   }
 }
