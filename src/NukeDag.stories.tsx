@@ -52,7 +52,45 @@ export const Sample: Story = {
     docs: {
       description: {
         story:
-          "A small comp. Scroll to zoom, drag to pan, press F to fit, and double-click grade_group to open it. Requires WebGPU.",
+          "Drag to pan, scroll or +/- to zoom, and press F to fit the selection or the whole graph. Double-click a group or gizmo, or select it and press Ctrl+Enter (Cmd+Return on Mac). Esc steps back out. Requires WebGPU.",
+      },
+    },
+  },
+};
+
+const gizmo = `Gizmo {
+ name Glow_Exponential
+ inputs 1
+ tile_color 0xc97200ff
+ xpos 0
+ ypos 0
+}
+ Input {
+  inputs 0
+  name img
+  xpos 0
+  ypos -40
+ }
+ Blur {
+  size 10
+  name Blur1
+  xpos 0
+  ypos 40
+ }
+ Output {
+  name Output1
+  xpos 0
+  ypos 120
+ }
+end_group
+`;
+
+export const Gizmo: Story = {
+  args: { script: gizmo },
+  parameters: {
+    docs: {
+      description: {
+        story: "A .gizmo file. Select Glow_Exponential and press Ctrl+Enter to read the nodes inside it.",
       },
     },
   },

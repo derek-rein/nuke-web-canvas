@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, JSX } from "react";
 import { createNukeRenderer, type Camera, type NukeRenderer } from "./gpu/renderer.ts";
 import { hitTest } from "./nuke/hitTest.ts";
+import { enterGroupPath, isEnterGroupKey, isLeaveGroupKey, leaveGroupPath } from "./nuke/navigate.ts";
 import { parseNukeScript } from "./nuke/parse.ts";
 import { buildScene, type DagNode, type DagScene } from "./nuke/scene.ts";
 import { measureDagText } from "./gpu/textAtlas.ts";
@@ -17,9 +18,11 @@ export function NukeDag(props: {
   const rendererRef = useRef<NukeRenderer | null>(null);
   const cameraRef = useRef<Camera>({ x: 0, y: 0, zoom: 1 });
   const fittedScene = useRef<string | null>(null);
+  const cameras = useRef(new Map<string, Camera>());
   const [gpuError, setGpuError] = useState<string | null>(null);
   const [gpuState, setGpuState] = useState<"loading" | "ready" | "drawn" | "error">("loading");
   const [path, setPath] = useState<string[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
   const parsed = useMemo(() => {
@@ -35,6 +38,9 @@ export function NukeDag(props: {
   const crumbs = useMemo(() => crumbsFor(parsed.scene, path), [parsed.scene, path]);
 
   useEffect(() => {
+    cameras.current.clear();
+    fittedScene.current = null;
+    setSelectedId(null);
     setPath([]);
   }, [props.script]);
 
@@ -80,13 +86,13 @@ export function NukeDag(props: {
     if (!renderer || !wrap || !canvas || !current) return;
     renderer.setScene(current);
     renderer.setSelected(null);
-    fittedScene.current = null;
     const paint = () => {
       const rect = wrap.getBoundingClientRect();
       if (rect.width < 2 || rect.height < 2) return;
       renderer.resize(rect.width, rect.height, window.devicePixelRatio || 1);
       if (fittedScene.current !== current.id) {
-        cameraRef.current = fitCamera(current, rect.width, rect.height);
+        if (fittedScene.current) cameras.current.set(fittedScene.current, { ...cameraRef.current });
+        cameraRef.current = cameras.current.get(current.id) ?? fitCamera(current.bounds, rect.width, rect.height);
         fittedScene.current = current.id;
       }
       renderer.setCamera(cameraRef.current);
@@ -136,6 +142,35 @@ export function NukeDag(props: {
     rendererRef.current?.draw();
   }
 
+  function selectedNode(): DagNode | null {
+    if (!current || !selectedId) return null;
+    return current.nodes.find((node) => node.id === selectedId) ?? null;
+  }
+
+  function openNode(node: DagNode | null) {
+    const next = enterGroupPath(path, node);
+    if (!next) return;
+    setSelectedId(null);
+    props.onSelectNode?.(null);
+    setPath(next);
+  }
+
+  function zoomBy(factor: number) {
+    const wrap = wrapRef.current;
+    const renderer = rendererRef.current;
+    if (!wrap || !renderer) return;
+    const rect = wrap.getBoundingClientRect();
+    const camera = cameraRef.current;
+    const sx = rect.width / 2;
+    const sy = rect.height / 2;
+    const dagX = camera.x + sx / camera.zoom;
+    const dagY = camera.y + sy / camera.zoom;
+    const zoom = clamp(camera.zoom * factor, 0.05, 8);
+    cameraRef.current = { x: dagX - sx / zoom, y: dagY - sy / zoom, zoom };
+    renderer.setCamera(cameraRef.current);
+    renderer.draw();
+  }
+
   function eventToDag(event: { clientX: number; clientY: number }): { x: number; y: number } | null {
     const canvas = canvasRef.current;
     if (!canvas) return null;
@@ -153,12 +188,39 @@ export function NukeDag(props: {
       className={props.className}
       data-gpu={gpuState}
       tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key !== "f" && event.key !== "F") return;
+      onKeyDownCapture={(event) => {
         if (!current || !wrapRef.current) return;
-        const rect = wrapRef.current.getBoundingClientRect();
-        cameraRef.current = fitCamera(current, rect.width, rect.height);
-        draw();
+        if (isEnterGroupKey(event)) {
+          event.preventDefault();
+          openNode(selectedNode());
+          return;
+        }
+        if (isLeaveGroupKey(event)) {
+          if (path.length === 0) return;
+          event.preventDefault();
+          setSelectedId(null);
+          props.onSelectNode?.(null);
+          setPath(leaveGroupPath(path));
+          return;
+        }
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (event.key === "f" || event.key === "F") {
+          const rect = wrapRef.current.getBoundingClientRect();
+          const node = selectedNode();
+          const focus = node ? { x: node.x, y: node.y, w: node.w, h: node.h } : current.bounds;
+          cameraRef.current = fitCamera(focus, rect.width, rect.height);
+          draw();
+          return;
+        }
+        if (event.key === "+" || event.key === "=") {
+          event.preventDefault();
+          zoomBy(1.25);
+          return;
+        }
+        if (event.key === "-" || event.key === "_") {
+          event.preventDefault();
+          zoomBy(1 / 1.25);
+        }
       }}
       style={{
         position: "relative",
@@ -175,6 +237,7 @@ export function NukeDag(props: {
         onPointerDown={(event) => {
           const canvas = canvasRef.current;
           if (!canvas || !current) return;
+          wrapRef.current?.focus({ preventScroll: true });
           canvas.setPointerCapture(event.pointerId);
           const startX = event.clientX;
           const startY = event.clientY;
@@ -197,6 +260,7 @@ export function NukeDag(props: {
             if (moved) return;
             const dag = eventToDag(ev);
             const hit = dag ? hitTest(current, dag.x, dag.y) : null;
+            setSelectedId(hit?.id ?? null);
             rendererRef.current?.setSelected(hit?.id ?? null);
             rendererRef.current?.draw();
             props.onSelectNode?.(hit);
@@ -209,9 +273,7 @@ export function NukeDag(props: {
           const dag = eventToDag(event);
           if (!dag) return;
           const hit = hitTest(current, dag.x, dag.y);
-          if (!hit?.graph) return;
-          setPath((items) => [...items, hit.id]);
-          props.onSelectNode?.(null);
+          openNode(hit);
         }}
       />
       <nav
@@ -220,30 +282,54 @@ export function NukeDag(props: {
           top: 8,
           left: 8,
           display: "flex",
-          gap: 6,
+          gap: 4,
+          alignItems: "center",
+          padding: "4px 8px",
+          background: "rgba(20,20,20,0.88)",
+          borderRadius: 4,
           font: "12px Verdana, sans-serif",
           color: "#ddd",
         }}
       >
         {crumbs.map((crumb, index) => (
-          <button
-            key={crumb.id}
-            type="button"
-            onClick={() => setPath(path.slice(0, index))}
-            style={{
-              background: "transparent",
-              color: "#ddd",
-              border: 0,
-              padding: 0,
-              cursor: "pointer",
-              font: "inherit",
-            }}
-          >
-            {index > 0 ? "/ " : ""}
-            {crumb.name}
-          </button>
+          <span key={crumb.id} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            {index > 0 ? <span style={{ color: "#777" }}>›</span> : null}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedId(null);
+                props.onSelectNode?.(null);
+                setPath(path.slice(0, index));
+              }}
+              style={{
+                background: "transparent",
+                color: index === crumbs.length - 1 ? "#fff" : "#8ec8ff",
+                border: 0,
+                padding: "2px 2px",
+                cursor: "pointer",
+                font: "inherit",
+              }}
+            >
+              {crumb.name}
+            </button>
+          </span>
         ))}
       </nav>
+      {current?.nodes.some((node) => node.id === selectedId && node.graph) ? (
+        <p
+          style={{
+            position: "absolute",
+            left: 8,
+            bottom: 8,
+            margin: 0,
+            color: "#9a9a9a",
+            font: "12px Verdana, sans-serif",
+            pointerEvents: "none",
+          }}
+        >
+          Ctrl+Enter to open
+        </p>
+      ) : null}
       {parsed.error || gpuError ? (
         <p style={{ position: "absolute", inset: 48, margin: 0, color: "#ddd", font: "12px Verdana, sans-serif" }}>
           {parsed.error ?? gpuError}
@@ -276,18 +362,22 @@ function crumbsFor(root: DagScene | null, path: string[]): Array<{ id: string; n
   return crumbs;
 }
 
-function fitCamera(scene: DagScene, cssWidth: number, cssHeight: number): Camera {
+function fitCamera(
+  rect: { x: number; y: number; w: number; h: number },
+  cssWidth: number,
+  cssHeight: number,
+): Camera {
   const padding = 48;
-  const width = Math.max(scene.bounds.w, 1);
-  const height = Math.max(scene.bounds.h, 1);
+  const width = Math.max(rect.w, 1);
+  const height = Math.max(rect.h, 1);
   const zoom = clamp(
     Math.min((cssWidth - padding * 2) / width, (cssHeight - padding * 2) / height),
     0.05,
     2,
   );
   return {
-    x: scene.bounds.x + scene.bounds.w / 2 - cssWidth / zoom / 2,
-    y: scene.bounds.y + scene.bounds.h / 2 - cssHeight / zoom / 2,
+    x: rect.x + rect.w / 2 - cssWidth / zoom / 2,
+    y: rect.y + rect.h / 2 - cssHeight / zoom / 2,
     zoom,
   };
 }

@@ -21,7 +21,7 @@ export function App() {
           Sample
         </button>
         <label className="file">
-          Open .nk
+          Open .nk / .gizmo
           <input
             type="file"
             accept=".nk,.gizmo,text/plain"
@@ -48,6 +48,7 @@ export function App() {
             <>
               <h1>{selected.name}</h1>
               <p>{selected.className}</p>
+              {selected.graph ? <p>Ctrl+Enter opens this group.</p> : null}
               <dl>
                 {Object.entries(selected.knobs).map(([key, value]) => (
                   <div key={key}>
@@ -58,7 +59,7 @@ export function App() {
               </dl>
             </>
           ) : (
-            <p>Drop a .nk script</p>
+            <p>Open a .nk or .gizmo. Ctrl+Enter steps into a group.</p>
           )}
         </aside>
       </div>

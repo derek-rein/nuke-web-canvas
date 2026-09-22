@@ -327,6 +327,36 @@ clone $Ng {
   expect(clone.w).toBe(Math.ceil("Grade1Clone".length * 6 + 16) + 14);
 });
 
+test("a gizmo keeps its internal graph, including a nested group", () => {
+  const scene = sceneOf(`
+Gizmo {
+ name Tool
+ inputs 1
+}
+ Group {
+  name Inner
+ }
+  Grade {
+   inputs 0
+   name Grade1
+  }
+  Output {
+   name Output1
+  }
+ end_group
+ Output {
+  name Output1
+ }
+end_group
+`);
+  const tool = nodeNamed(scene.nodes, "Tool");
+  expect(tool.className).toBe("Gizmo");
+  expect(tool.graph).not.toBeNull();
+  expect(tool.graph?.nodes.map((node) => node.name)).toEqual(["Inner", "Output1"]);
+  const inner = tool.graph?.nodes.find((node) => node.name === "Inner");
+  expect(inner?.graph?.nodes.map((node) => node.name)).toEqual(["Grade1", "Output1"]);
+});
+
 test("backdrops use their bounds and sticky notes have no pipes", () => {
   const scene = sceneOf(`
 Read {
