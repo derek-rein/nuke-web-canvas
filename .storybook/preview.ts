@@ -5,7 +5,7 @@ const preview: Preview = {
     layout: "fullscreen",
     backgrounds: {
       options: {
-        dag: { name: "dag", value: "#1c1c1c" },
+        dag: { name: "dag", value: "#555555" },
       },
     },
   },

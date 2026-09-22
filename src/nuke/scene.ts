@@ -41,11 +41,18 @@ export type Pipe = {
   to: Anchor;
 };
 
+export type LinkArrow = {
+  fromId: string;
+  toId: string;
+  kind: "expression" | "clone";
+};
+
 export type DagScene = {
   id: string;
   name: string;
   nodes: DagNode[];
   pipes: Pipe[];
+  links: LinkArrow[];
   bounds: { x: number; y: number; w: number; h: number };
 };
 
@@ -53,7 +60,8 @@ export type MeasureText = (line: string) => number;
 
 export const NODE_FONT_SIZE = 11;
 export const LABEL_PAD = 8;
-export const CLONE_MARK = 14;
+
+const EXPRESSION_IGNORE = new Set(["parent", "this", "root", "curve", "frame"]);
 
 const GROUP_CLASSES = new Set(["Group", "Gizmo", "LiveGroup", "VariableGroup"]);
 
@@ -105,8 +113,33 @@ function layout(raw: RawNode, measure: MeasureText): DagScene {
     name: raw.name,
     nodes,
     pipes,
+    links: linkArrows(nodes),
     bounds: boundsOf(nodes),
   };
+}
+
+function linkArrows(nodes: readonly DagNode[]): LinkArrow[] {
+  const links: LinkArrow[] = [];
+  const seen = new Set<string>();
+  const add = (link: LinkArrow): void => {
+    const key = `${link.kind}:${link.fromId}:${link.toId}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    links.push(link);
+  };
+  for (const node of nodes) {
+    for (const value of Object.values(node.knobs)) {
+      for (const match of value.matchAll(/(?<![\w.])([A-Za-z_][\w]*)\s*\./g)) {
+        const name = match[1];
+        if (!name || EXPRESSION_IGNORE.has(name)) continue;
+        const source = nodes.find((other) => other.id !== node.id && other.name === name);
+        if (!source) continue;
+        add({ fromId: source.id, toId: node.id, kind: "expression" });
+      }
+    }
+    if (node.cloneOf) add({ fromId: node.cloneOf, toId: node.id, kind: "clone" });
+  }
+  return links;
 }
 
 function buildNode(raw: RawNode, measure: MeasureText): DagNode {
@@ -114,7 +147,6 @@ function buildNode(raw: RawNode, measure: MeasureText): DagNode {
   const labelLines = linesFor(raw, kind);
   const postage = kind === "node" && truthy(raw.knobs.postage_stamp);
   const sized = sizeOf(kind, labelLines, measure, raw.knobs, postage);
-  if (raw.cloneOf && kind === "node") sized.w += CLONE_MARK;
   const x = numberKnob(raw.knobs.xpos) ?? 0;
   const y = numberKnob(raw.knobs.ypos) ?? 0;
   const color = parseTileColor(raw.knobs.tile_color) ?? classColor(raw.className);

@@ -1,5 +1,4 @@
 import {
-  CLONE_MARK,
   LABEL_PAD,
   labelLineHeight,
   noteFontSize,
@@ -46,6 +45,15 @@ const MODE_ROUND = 1;
 const MODE_CIRCLE = 2;
 const MODE_GLYPH = 3;
 const TEXT_ZOOM = 0.28;
+const EXPRESSION_LINK: [number, number, number, number] = [0x6c / 255, 0xbe / 255, 0x6c / 255, 1];
+const CLONE_LINK: [number, number, number, number] = [0xe8 / 255, 0x78 / 255, 0x30 / 255, 1];
+const CLONE_BADGE: [number, number, number, number] = [0xe0 / 255, 0x70 / 255, 0x20 / 255, 1];
+const CHANNELS: Array<[number, number, number, number]> = [
+  [0xe2 / 255, 0x3b / 255, 0x3b / 255, 1],
+  [0x3c / 255, 0xba / 255, 0x3c / 255, 1],
+  [0x3c / 255, 0x6f / 255, 0xe2 / 255, 1],
+  [0xf2 / 255, 0xf2 / 255, 0xf2 / 255, 1],
+];
 
 export function buildGeometry(
   scene: DagScene,
@@ -69,10 +77,11 @@ export function buildGeometry(
       if (atlas && zoom >= TEXT_ZOOM) pushPipeLabel(vertices, pipe, atlas);
     }
   }
+  pushLinks(vertices, scene);
   for (const node of scene.nodes) {
     if (node.kind === "backdrop" || node.kind === "sticky") continue;
     pushNode(vertices, node);
-    if (node.cloneOf && node.kind === "node") pushCloneChip(vertices, node);
+    if (node.cloneOf && node.kind === "node") pushCloneBadge(vertices, node);
     if (node.disabled) pushCross(vertices, node);
     if (node.cloneOf && node.kind === "node" && atlas && zoom >= TEXT_ZOOM) pushCloneMark(vertices, node, atlas);
     if (selectedId === node.id) pushSelection(vertices, node);
@@ -92,6 +101,7 @@ function pushNode(vertices: Vertex[], node: DagNode): void {
     pushRoundRect(vertices, node.x, node.y, node.w, 46, [0.12, 0.12, 0.12, 1], 2);
   }
   pushRoundRect(vertices, node.x, node.bodyY, node.w, node.bodyH, node.color, 3);
+  pushChannels(vertices, node);
 }
 
 function pushRoundRect(
@@ -146,7 +156,21 @@ function pushPipe(
   }
   const last = samples[samples.length - 1];
   const prev = samples[samples.length - 2];
-  if (last && prev) pushArrow(vertices, prev, last, color);
+  if (last && prev) pushArrow(vertices, prev, last, color, 12, 4);
+}
+
+function pushLinks(vertices: Vertex[], scene: DagScene): void {
+  const byId = new Map(scene.nodes.map((node) => [node.id, node]));
+  for (const link of scene.links) {
+    const source = byId.get(link.fromId);
+    const target = byId.get(link.toId);
+    if (!source || !target) continue;
+    const from = { x: source.x + source.w / 2, y: source.bodyY + source.bodyH / 2 };
+    const to = { x: target.x + target.w / 2, y: target.bodyY + target.bodyH / 2 };
+    const color = link.kind === "expression" ? EXPRESSION_LINK : CLONE_LINK;
+    pushSegment(vertices, from, to, 1.5, color);
+    pushArrow(vertices, from, to, color, 8, 3);
+  }
 }
 
 function pushSegment(
@@ -177,17 +201,18 @@ function pushArrow(
   from: { x: number; y: number },
   to: { x: number; y: number },
   color: [number, number, number, number],
+  size: number,
+  halfWidth: number,
 ): void {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const length = Math.hypot(dx, dy) || 1;
   const ux = dx / length;
   const uy = dy / length;
-  const size = 12;
   const baseX = to.x - ux * size;
   const baseY = to.y - uy * size;
-  const px = -uy * 4;
-  const py = ux * 4;
+  const px = -uy * halfWidth;
+  const py = ux * halfWidth;
   const triangle: Array<[number, number]> = [
     [to.x, to.y],
     [baseX + px, baseY + py],
@@ -244,18 +269,23 @@ function pushPipeLabel(vertices: Vertex[], pipe: Pipe, atlas: GlyphLookup): void
   pushCenteredGlyphs(vertices, pipe.label, x, centerY, fontSize, [0.95, 0.95, 0.95, 1], atlas);
 }
 
-function pushCloneChip(vertices: Vertex[], node: DagNode): void {
-  const chip = CLONE_MARK - 2;
-  const chipH = Math.min(chip, Math.max(1, node.bodyH - 4));
-  pushRoundRect(
-    vertices,
-    node.x + node.w - CLONE_MARK + 1,
-    node.bodyY + 2,
-    chip,
-    chipH,
-    [0.1, 0.1, 0.1, 1],
-    2,
-  );
+function pushChannels(vertices: Vertex[], node: DagNode): void {
+  const width = 4;
+  const height = 3;
+  const gap = 1;
+  const total = CHANNELS.length * width + (CHANNELS.length - 1) * gap;
+  const left = node.x + (node.w - total) / 2;
+  const top = node.bodyY + node.bodyH - height;
+  for (const [index, color] of CHANNELS.entries()) {
+    pushQuad(vertices, left + index * (width + gap), top, width, height, color, MODE_SOLID, 0);
+  }
+}
+
+function pushCloneBadge(vertices: Vertex[], node: DagNode): void {
+  const diameter = 16;
+  const cx = node.x;
+  const cy = node.bodyY + node.bodyH / 2;
+  pushQuad(vertices, cx - diameter / 2, cy - diameter / 2, diameter, diameter, CLONE_BADGE, MODE_CIRCLE, diameter / 2);
 }
 
 function pushText(vertices: Vertex[], node: DagNode, atlas: GlyphLookup): void {
@@ -264,7 +294,6 @@ function pushText(vertices: Vertex[], node: DagNode, atlas: GlyphLookup): void {
   const scale = fontSize / 48;
   const lineHeight = labelLineHeight(fontSize);
   const blockHeight = node.labelLines.length * lineHeight;
-  const reserve = node.cloneOf && node.kind === "node" ? CLONE_MARK : 0;
   const originY =
     node.kind === "backdrop" || node.kind === "sticky"
       ? node.y + LABEL_PAD
@@ -275,7 +304,7 @@ function pushText(vertices: Vertex[], node: DagNode, atlas: GlyphLookup): void {
     let cursor =
       node.kind === "backdrop" || node.kind === "sticky"
         ? node.x + LABEL_PAD
-        : node.x + (node.w - reserve) / 2 - width / 2;
+        : node.x + node.w / 2 - width / 2;
     const baseline = originY + index * lineHeight + fontSize;
     for (const glyph of glyphs) {
       pushGlyph(
@@ -295,19 +324,17 @@ function pushText(vertices: Vertex[], node: DagNode, atlas: GlyphLookup): void {
 function pushCloneMark(vertices: Vertex[], node: DagNode, atlas: GlyphLookup): void {
   const glyph = atlas.glyphsFor("C")[0];
   if (!glyph) return;
-  const fontSize = 9;
+  const fontSize = 12;
   const scale = fontSize / 48;
-  const chip = CLONE_MARK - 2;
-  const chipH = Math.min(chip, Math.max(1, node.bodyH - 4));
   const gw = glyph.width * scale;
   const gh = glyph.height * scale;
   pushGlyph(
     vertices,
-    node.x + node.w - CLONE_MARK + 1 + (chip - gw) / 2,
-    node.bodyY + 2 + (chipH - gh) / 2,
+    node.x - gw / 2,
+    node.bodyY + node.bodyH / 2 - gh / 2,
     gw,
     gh,
-    [0.97, 0.97, 0.97, 1],
+    [1, 1, 1, 1],
     glyph,
   );
 }

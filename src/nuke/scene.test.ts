@@ -324,7 +324,66 @@ clone $Ng {
 `);
   const clone = nodeNamed(scene.nodes, "Grade1Clone");
   expect(clone.cloneOf).toBeTruthy();
-  expect(clone.w).toBe(Math.ceil("Grade1Clone".length * 6 + 16) + 14);
+  expect(clone.w).toBe(Math.ceil("Grade1Clone".length * 6 + 16));
+});
+
+test("expressions and clones become straight link arrows", () => {
+  const scene = sceneOf(`
+Tracker4 {
+ inputs 0
+ name Tracker1
+ xpos 0
+ ypos 0
+}
+Transform {
+ name Transform1
+ translate {{Tracker1.translate} {Tracker1.translate}}
+ xpos 200
+ ypos 80
+}
+Grade {
+ inputs 0
+ name Grade1
+ xpos 0
+ ypos 200
+}
+set Ng [stack 0]
+clone $Ng {
+ inputs 0
+ name Grade1Clone
+ xpos 160
+ ypos 200
+}
+`);
+  expect(scene.links).toEqual([
+    { fromId: nodeNamed(scene.nodes, "Tracker1").id, toId: nodeNamed(scene.nodes, "Transform1").id, kind: "expression" },
+    { fromId: nodeNamed(scene.nodes, "Grade1").id, toId: nodeNamed(scene.nodes, "Grade1Clone").id, kind: "clone" },
+  ]);
+  const clone = nodeNamed(scene.nodes, "Grade1Clone");
+  expect(clone.w).toBe(Math.ceil("Grade1Clone".length * 6 + 16));
+});
+
+test("parent and self names are not expression links", () => {
+  const scene = sceneOf(`
+Grade {
+ inputs 0
+ name Grade1
+ whitepoint {{parent.whitepoint}}
+ xpos 0
+ ypos 0
+}
+Blur {
+ name Blur1
+ size {{Grade1.size}}
+ xpos 0
+ ypos 40
+}
+`);
+  const grade = nodeNamed(scene.nodes, "Grade1");
+  expect(scene.links.some((link) => link.toId === grade.id)).toBe(false);
+  expect(scene.links).toEqual([
+    { fromId: grade.id, toId: nodeNamed(scene.nodes, "Blur1").id, kind: "expression" },
+  ]);
 });
 
 test("a gizmo keeps its internal graph, including a nested group", () => {

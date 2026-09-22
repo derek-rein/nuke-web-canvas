@@ -152,7 +152,7 @@ export async function createNukeRenderer(
       shapePipeline
         ?.withColorAttachment({
           view: context,
-          clearValue: [0.11, 0.11, 0.11, 1],
+          clearValue: [85 / 255, 85 / 255, 85 / 255, 1],
           loadOp: "clear",
           storeOp: "store",
         })
@@ -161,7 +161,7 @@ export async function createNukeRenderer(
       glyphPipeline
         .withColorAttachment({
           view: context,
-          clearValue: [0.11, 0.11, 0.11, 1],
+          clearValue: [85 / 255, 85 / 255, 85 / 255, 1],
           loadOp: shapePipeline ? "load" : "clear",
           storeOp: "store",
         })

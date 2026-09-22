@@ -194,7 +194,45 @@ Merge2 {
   expect(beside("mask", 12, 0)).toBe(true);
 });
 
-test("a clone mark sits in the reserved corner and does not cover the name", () => {
+test("expression and clone links use their arrow colors", () => {
+  const scene = sceneOf(`
+Tracker4 {
+ inputs 0
+ name Tracker1
+ xpos 0
+ ypos 0
+}
+Transform {
+ name Transform1
+ translate {{Tracker1.translate}}
+ xpos 200
+ ypos 80
+}
+Grade {
+ inputs 0
+ name Grade1
+ xpos 0
+ ypos 200
+}
+set Ng [stack 0]
+clone $Ng {
+ inputs 0
+ name Grade1Clone
+ xpos 160
+ ypos 200
+}
+`);
+  const vertices = buildGeometry(scene, 1, null, null);
+  const expression = vertices.find(
+    (vertex) =>
+      Math.abs(vertex.r - 0x6c / 255) <= 0.01 && Math.abs(vertex.g - 0xbe / 255) <= 0.01,
+  );
+  expect(expression).toBeTruthy();
+  const cloneLink = vertices.find((vertex) => Math.abs(vertex.r - 0xe8 / 255) <= 0.01);
+  expect(cloneLink).toBeTruthy();
+});
+
+test("a clone mark sits on the left and the name stays on the node", () => {
   const scene = sceneOf(`
 Grade {
  inputs 0
@@ -213,20 +251,19 @@ clone $Ng {
   const clone = scene.nodes.find((node) => node.name === "Grade1Clone");
   expect(clone).toBeTruthy();
   const vertices = buildGeometry(scene, 1, atlas, null);
-  const lightSolids = vertices.filter(
-    (vertex) => vertex.mode === 0 && vertex.r > 0.9 && vertex.g > 0.9 && vertex.b > 0.9,
-  );
-  expect(lightSolids).toHaveLength(0);
-  const mark = vertices.filter((vertex) => vertex.mode === 3 && vertex.x >= clone!.x + clone!.w - 14);
-  const name = vertices.filter(
+  const onNode = vertices.filter(
     (vertex) =>
       vertex.mode === 3 &&
-      vertex.x < clone!.x + clone!.w - 14 &&
       vertex.y >= clone!.bodyY &&
-      vertex.y <= clone!.bodyY + clone!.bodyH,
+      vertex.y <= clone!.bodyY + clone!.bodyH &&
+      vertex.x >= clone!.x - 8 &&
+      vertex.x <= clone!.x + clone!.w,
   );
+  const mark = onNode.filter((vertex) => vertex.x < clone!.x + 4);
+  const name = onNode.filter((vertex) => vertex.x >= clone!.x + 4);
   expect(mark.length).toBeGreaterThan(0);
   expect(name.length).toBeGreaterThan(0);
+  expect(name.every((vertex) => vertex.x >= clone!.x)).toBe(true);
 });
 
 test("selection adds an orange outline only for the selected id", () => {
