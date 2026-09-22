@@ -46,6 +46,79 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+const shapes = `version 17.0 v3
+Camera3 {
+ inputs 0
+ name Camera1
+ xpos 0
+ ypos 0
+}
+Light2 {
+ inputs 0
+ name Light1
+ xpos 120
+ ypos 0
+}
+Scene {
+ inputs 0
+ name Scene1
+ xpos 240
+ ypos 0
+}
+GeoCard {
+ inputs 0
+ name GeoCard1
+ xpos 0
+ ypos 120
+}
+ReadGeo2 {
+ inputs 0
+ name ReadGeo1
+ xpos 160
+ ypos 120
+}
+DeepRead {
+ inputs 0
+ name DeepRead1
+ xpos 0
+ ypos 200
+}
+DeepMerge {
+ inputs 0
+ name DeepMerge1
+ xpos 180
+ ypos 280
+}
+BasicMaterial {
+ inputs 0
+ name BasicMaterial1
+ xpos 360
+ ypos 120
+}
+Viewer {
+ inputs 0
+ name Viewer1
+ xpos 360
+ ypos 200
+}
+ParticleEmitter {
+ inputs 0
+ name ParticleEmitter1
+ xpos 360
+ ypos 280
+}
+Blur {
+ inputs 0
+ name Blur1
+ xpos 180
+ ypos 360
+}
+`;
+
+export const Shapes: Story = {
+  args: { script: shapes },
+};
+
 export const Sample: Story = {
   args: { script: SAMPLE_SCRIPT },
   parameters: {

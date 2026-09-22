@@ -46,6 +46,59 @@ Grade {
   }
 });
 
+test("deep, 3D, and material nodes use their Nuke outlines", () => {
+  const scene = sceneOf(`
+Camera3 {
+ inputs 0
+ name Camera1
+ xpos 0
+ ypos 0
+}
+GeoCard {
+ inputs 0
+ name GeoCard1
+ xpos 120
+ ypos 0
+}
+DeepMerge {
+ inputs 0
+ name DeepMerge1
+ xpos 240
+ ypos 0
+}
+BasicMaterial {
+ inputs 0
+ name BasicMaterial1
+ xpos 400
+ ypos 0
+}
+ParticleEmitter {
+ inputs 0
+ name ParticleEmitter1
+ xpos 560
+ ypos 0
+}
+`);
+  const body = (name: string) => {
+    const node = scene.nodes.find((item) => item.name === name);
+    const vertices = buildGeometry(scene, 1, null, null).filter(
+      (vertex) => vertex.mode > 3 && node && vertex.y >= node.bodyY && vertex.y <= node.bodyY + node.bodyH && vertex.x >= node.x && vertex.x <= node.x + node.w,
+    );
+    return { node, mode: vertices[0]?.mode, radius: vertices[0]?.radius };
+  };
+  const camera = body("Camera1");
+  expect(camera.node?.shape).toBe("circle");
+  expect(camera.node?.w).toBe(camera.node?.bodyH);
+  expect(camera.mode).toBe(5);
+  const card = body("GeoCard1");
+  expect(card.node?.shape).toBe("pill");
+  expect(card.mode).toBe(4);
+  expect(card.radius).toBe((card.node?.bodyH ?? 0) / 2);
+  expect(body("DeepMerge1").mode).toBe(6);
+  expect(body("BasicMaterial1").mode).toBe(7);
+  expect(body("ParticleEmitter1").mode).toBe(8);
+});
+
 test("a dot becomes circle vertices", () => {
   const scene = sceneOf(`
 Dot {

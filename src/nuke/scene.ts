@@ -1,5 +1,6 @@
 import type { ParsedScript, RawNode } from "./types.ts";
 import { classColor, parseTileColor, textColorFor } from "./colors.ts";
+import { nodeShape, type NodeShape } from "./shapes.ts";
 
 export type Rgba = [number, number, number, number];
 
@@ -16,6 +17,7 @@ export type DagNode = {
   maskInputs: number;
   cloneOf: string | null;
   kind: "node" | "dot" | "backdrop" | "sticky";
+  shape: NodeShape;
   x: number;
   y: number;
   w: number;
@@ -146,7 +148,8 @@ function buildNode(raw: RawNode, measure: MeasureText): DagNode {
   const kind = kindOf(raw.className);
   const labelLines = linesFor(raw, kind);
   const postage = kind === "node" && truthy(raw.knobs.postage_stamp);
-  const sized = sizeOf(kind, labelLines, measure, raw.knobs, postage);
+  const shape = kind === "node" ? nodeShape(raw.className) : "rect";
+  const sized = sizeOf(kind, shape, labelLines, measure, raw.knobs, postage);
   const x = numberKnob(raw.knobs.xpos) ?? 0;
   const y = numberKnob(raw.knobs.ypos) ?? 0;
   const color = parseTileColor(raw.knobs.tile_color) ?? classColor(raw.className);
@@ -159,6 +162,7 @@ function buildNode(raw: RawNode, measure: MeasureText): DagNode {
     maskInputs: raw.maskInputs,
     cloneOf: raw.cloneOf,
     kind,
+    shape,
     x,
     y,
     w: sized.w,
@@ -283,6 +287,7 @@ function autoLabel(raw: RawNode): string | null {
 
 function sizeOf(
   kind: DagNode["kind"],
+  shape: NodeShape,
   lines: string[],
   measure: MeasureText,
   knobs: Record<string, string>,
@@ -303,9 +308,14 @@ function sizeOf(
     return { w, h: bodyH, bodyH, stamp: 0 };
   }
   const textWidth = lines.reduce((widest, line) => Math.max(widest, measure(line)), 0);
-  const w = Math.max(80, Math.ceil(textWidth + 16));
   const bodyH = lines.length <= 1 ? 18 : 18 + (lines.length - 1) * 12;
   const stamp = postage ? 46 : 0;
+  if (shape === "circle") {
+    const diameter = Math.max(36, bodyH, Math.ceil(textWidth + 22));
+    return { w: diameter, h: diameter + stamp, bodyH: diameter, stamp };
+  }
+  const cap = shape === "rect" ? 0 : Math.ceil(bodyH * 1.2);
+  const w = Math.max(80, Math.ceil(textWidth + 16)) + cap;
   return { w, h: bodyH + stamp, bodyH, stamp };
 }
 

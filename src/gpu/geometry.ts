@@ -45,6 +45,10 @@ const MODE_ROUND = 1;
 const MODE_CIRCLE = 2;
 const MODE_GLYPH = 3;
 const MODE_BODY = 4;
+const MODE_CIRCLE_BODY = 5;
+const MODE_DEEP = 6;
+const MODE_POINT = 7;
+const MODE_PARTICLE = 8;
 const TEXT_ZOOM = 0.28;
 const EXPRESSION_LINK: [number, number, number, number] = [0x71 / 255, 0xc9 / 255, 0x73 / 255, 1];
 const CLONE_LINK: [number, number, number, number] = [0xe8 / 255, 0x78 / 255, 0x30 / 255, 1];
@@ -105,8 +109,33 @@ function pushNode(vertices: Vertex[], node: DagNode): void {
   if (node.postage) {
     pushRoundRect(vertices, node.x, node.y, node.w, 46, [0.12, 0.12, 0.12, 1], 2);
   }
-  pushQuad(vertices, node.x, node.bodyY, node.w, node.bodyH, node.color, MODE_BODY, 2);
+  pushBody(vertices, node);
   pushChannels(vertices, node);
+}
+
+function pushBody(vertices: Vertex[], node: DagNode): void {
+  const radius = Math.min(node.w, node.bodyH) / 2;
+  if (node.shape === "circle") {
+    pushQuad(vertices, node.x, node.bodyY, node.w, node.bodyH, node.color, MODE_CIRCLE_BODY, radius);
+    return;
+  }
+  if (node.shape === "pill") {
+    pushQuad(vertices, node.x, node.bodyY, node.w, node.bodyH, node.color, MODE_BODY, radius);
+    return;
+  }
+  if (node.shape === "deep") {
+    pushQuad(vertices, node.x, node.bodyY, node.w, node.bodyH, node.color, MODE_DEEP, radius);
+    return;
+  }
+  if (node.shape === "point") {
+    pushQuad(vertices, node.x, node.bodyY, node.w, node.bodyH, node.color, MODE_POINT, radius);
+    return;
+  }
+  if (node.shape === "particle") {
+    pushQuad(vertices, node.x, node.bodyY, node.w, node.bodyH, node.color, MODE_PARTICLE, radius);
+    return;
+  }
+  pushQuad(vertices, node.x, node.bodyY, node.w, node.bodyH, node.color, MODE_BODY, 2);
 }
 
 function pushRoundRect(
@@ -389,7 +418,8 @@ function pushChannels(vertices: Vertex[], node: DagNode): void {
   const gap = 1;
   const total = CHANNELS.length * width + (CHANNELS.length - 1) * gap;
   const left = node.x + (node.w - total) / 2;
-  const top = node.bodyY + node.bodyH - height;
+  const lift = node.shape === "circle" ? 8 : 0;
+  const top = node.bodyY + node.bodyH - height - lift;
   for (const [index, color] of CHANNELS.entries()) {
     pushQuad(vertices, left + index * (width + gap), top, width, height, color, MODE_SOLID, 0);
   }

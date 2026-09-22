@@ -235,8 +235,14 @@ function shapeFragment() {
     const rectDist = roundRectDistance(input.uv.x, input.uv.y, input.halfX, input.halfY, input.radius);
     const circleDist = std.sqrt(input.uv.x * input.uv.x + input.uv.y * input.uv.y) - input.radius;
     const body = input.mode > 3.5;
-    const useRect = std.select(input.mode < 1.5, true, body);
-    const dist = std.select(circleDist, rectDist, useRect);
+    const circleLike = std.select(std.abs(input.mode - 2) < 0.5, true, std.abs(input.mode - 5) < 0.5);
+    const deepDist = std.max(deepSide(input.uv.x, input.uv.y, input.halfX, input.halfY), capDist(input.uv.x, input.uv.y, input.halfX, input.halfY));
+    const particleDist = std.max(-input.uv.x - input.halfX, capDist(input.uv.x, input.uv.y, input.halfX, input.halfY));
+    const pointDist = pointOutline(input.uv.x, input.uv.y, input.halfX, input.halfY);
+    const shaped = std.select(rectDist, circleDist, circleLike);
+    const withDeep = std.select(shaped, deepDist, std.abs(input.mode - 6) < 0.5);
+    const withPoint = std.select(withDeep, pointDist, std.abs(input.mode - 7) < 0.5);
+    const dist = std.select(withPoint, particleDist, std.abs(input.mode - 8) < 0.5);
     const aa = std.fwidth(dist);
     const coverage = 1 - std.smoothstep(0 - aa, aa, dist);
     const yNorm = input.uv.y / std.max(input.halfY, 1);
@@ -252,6 +258,47 @@ function shapeFragment() {
     const alpha = std.select(input.color.w * coverage, input.color.w, input.mode < 0.5);
     return d.vec4f(red, green, blue, alpha);
   });
+}
+
+function capDist(px: number, py: number, halfX: number, halfY: number): number {
+  "use gpu";
+  const capX = halfX - halfY;
+  const dx = px - capX;
+  const radial = std.sqrt(dx * dx + py * py) - halfY;
+  const flat = std.abs(py) - halfY;
+  return std.select(flat, radial, px > capX);
+}
+
+function deepSide(px: number, py: number, halfX: number, halfY: number): number {
+  "use gpu";
+  const slant = halfY * 0.9;
+  const ey = halfY * 2;
+  const len = std.sqrt(slant * slant + ey * ey);
+  const relX = px + halfX;
+  const relY = py + halfY;
+  return (slant * relY - ey * relX) / len;
+}
+
+function edgeOutside(px: number, py: number, ax: number, ay: number, bx: number, by: number): number {
+  "use gpu";
+  const ex = bx - ax;
+  const ey = by - ay;
+  const len = std.sqrt(ex * ex + ey * ey);
+  return (ey * (px - ax) - ex * (py - ay)) / len;
+}
+
+function pointOutline(px: number, py: number, halfX: number, halfY: number): number {
+  "use gpu";
+  const inset = halfY * 1.15;
+  const topLeftX = -halfX + inset;
+  const topRightX = halfX - inset;
+  const top = edgeOutside(px, py, topLeftX, -halfY, topRightX, -halfY);
+  const upperRight = edgeOutside(px, py, topRightX, -halfY, halfX, 0);
+  const lowerRight = edgeOutside(px, py, halfX, 0, topRightX, halfY);
+  const bottom = edgeOutside(px, py, topRightX, halfY, topLeftX, halfY);
+  const lowerLeft = edgeOutside(px, py, topLeftX, halfY, -halfX, 0);
+  const upperLeft = edgeOutside(px, py, -halfX, 0, topLeftX, -halfY);
+  return std.max(top, std.max(upperRight, std.max(lowerRight, std.max(bottom, std.max(lowerLeft, upperLeft)))));
 }
 
 function roundRectDistance(px: number, py: number, halfX: number, halfY: number, radius: number): number {
