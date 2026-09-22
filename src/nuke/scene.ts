@@ -1,6 +1,7 @@
 import type { ParsedScript, RawNode } from "./types.ts";
 import { classColor, parseTileColor, textColorFor } from "./colors.ts";
 import { labelLines } from "./labels.ts";
+import { type TclScope } from "./tcl.ts";
 import { nodeShape, type NodeShape } from "./shapes.ts";
 
 export type Rgba = [number, number, number, number];
@@ -58,6 +59,10 @@ export type DagScene = {
   pipes: Pipe[];
   links: LinkArrow[];
   bounds: { x: number; y: number; w: number; h: number };
+  /** Knobs of the group or root that owns this graph. `parent.name` reads them. */
+  knobs: Record<string, string>;
+  /** Frame TCL expressions use. Root `first_frame`, otherwise 1. */
+  frame: number;
 };
 
 export type MeasureText = (line: string) => number;
@@ -93,7 +98,7 @@ export function pipeSamples(from: Anchor, to: Anchor, _steps: number): Array<{ x
   ];
 }
 
-function layout(raw: RawNode, measure: MeasureText): DagScene {
+function layout(raw: RawNode, measure: MeasureText, parent?: TclScope): DagScene {
   let autoBottom = -40;
   const nodes = raw.children.map((child) => {
     const node = buildNode(child, measure);
@@ -105,21 +110,69 @@ function layout(raw: RawNode, measure: MeasureText): DagScene {
     }
     return node;
   });
+  const frame = numberKnob(plainNumber(raw.knobs.first_frame)) ?? parent?.frame ?? 1;
+  const scene: DagScene = {
+    id: raw.id,
+    name: raw.name,
+    nodes,
+    knobs: raw.knobs,
+    frame,
+    pipes: [],
+    links: [],
+    bounds: { x: 0, y: 0, w: 1, h: 1 },
+  };
+  seal(scene, measure, { frame, label: raw.name, knobs: raw.knobs, nodes: new Map(), parent });
+  return scene;
+}
+
+export function expressionScope(node: DagNode, scene: DagScene): TclScope {
+  const nodes = new Map(scene.nodes.map((item) => [item.name, item.knobs]));
+  return {
+    frame: scene.frame,
+    label: node.name,
+    knobs: node.knobs,
+    nodes,
+    parent: { frame: scene.frame, label: scene.name, knobs: scene.knobs, nodes: new Map() },
+  };
+}
+
+function seal(scene: DagScene, measure: MeasureText, owner: TclScope): void {
+  scene.frame = owner.frame;
+  const nodes = scene.nodes;
+  const byName = new Map(nodes.map((node) => [node.name, node.knobs]));
   const byId = new Map(nodes.map((node) => [node.id, node]));
+  for (const node of nodes) {
+    const scope: TclScope = { frame: owner.frame, label: node.name, knobs: node.knobs, nodes: byName, parent: owner };
+    const lines = labelLines(node.className, node.name, node.kind, node.knobs, scope);
+    resize(node, lines, measure);
+    if (node.graph) seal(node.graph, measure, scope);
+  }
   for (const node of nodes) {
     if (node.kind !== "dot" || node.knobs.tile_color) continue;
     node.color = inheritedDotColor(node, byId, new Set());
     node.textColor = textColorFor(node.color);
   }
-  const pipes = nodes.flatMap((node) => pipesFor(node, byId));
-  return {
-    id: raw.id,
-    name: raw.name,
-    nodes,
-    pipes,
-    links: linkArrows(nodes),
-    bounds: boundsOf(nodes),
-  };
+  scene.pipes = nodes.flatMap((node) => pipesFor(node, byId));
+  scene.links = linkArrows(nodes);
+  scene.bounds = boundsOf(nodes);
+}
+
+function resize(node: DagNode, lines: string[], measure: MeasureText): void {
+  const changed = lines.length !== node.labelLines.length || lines.some((line, index) => line !== node.labelLines[index]);
+  node.labelLines = lines;
+  if (!changed) return;
+  const sized = sizeOf(node.kind, node.shape, lines, measure, node.knobs, node.postage);
+  node.w = sized.w;
+  node.h = sized.h;
+  node.bodyH = sized.bodyH;
+  node.bodyY = node.y + sized.stamp;
+}
+
+function plainNumber(value: string | undefined): string | undefined {
+  if (value == null) return undefined;
+  const trimmed = value.trim();
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed.slice(1, -1).trim();
+  return trimmed;
 }
 
 function linkArrows(nodes: readonly DagNode[]): LinkArrow[] {

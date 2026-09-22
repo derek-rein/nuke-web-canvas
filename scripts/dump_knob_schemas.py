@@ -12,45 +12,6 @@ import sys
 
 import nuke
 
-NODE_TAB = {
-    "label",
-    "note_font",
-    "note_font_size",
-    "note_font_color",
-    "hide_input",
-    "cached",
-    "disable",
-    "dope_sheet",
-    "bookmark",
-    "postage_stamp",
-    "postage_stamp_frame",
-    "lifetimeStart",
-    "lifetimeEnd",
-    "useLifetime",
-    "tile_color",
-    "gl_color",
-}
-
-LAYOUT = {
-    "name",
-    "xpos",
-    "ypos",
-    "selected",
-    "inputs",
-    "icon",
-    "indicators",
-    "help",
-    "knobChanged",
-    "onCreate",
-    "onDestroy",
-    "updateUI",
-    "autolabel",
-    "panel",
-    "rootNodeUpdated",
-    "z_order",
-    "postage_stamp_frame",
-}
-
 NUMERIC = {
     "Array_Knob",
     "WH_Knob",
@@ -75,11 +36,6 @@ NUMERIC = {
 }
 
 MENUISH = ("Enum", "Bitmask", "Pulldown", "Radio", "Format", "ColorSpace", "Colorspace", "View", "Menu")
-
-LABELS = {
-    "maskChannelInput": "mask",
-    "maskChannelMask": "mask channels",
-}
 
 PATH_RE = re.compile(r"/(?:Users|Applications|Volumes)/\S*")
 
@@ -150,47 +106,66 @@ def menu_text(knob):
     return "\n".join(parts)
 
 
+# Not shown in the properties panel. The Node tab itself is a real Tab_Knob and
+# stays in allKnobs() order.
+SKIP = {
+    "name",
+    "help",
+    "onCreate",
+    "onDestroy",
+    "knobChanged",
+    "updateUI",
+    "autolabel",
+    "panel",
+    "selected",
+    "xpos",
+    "ypos",
+    "icon",
+    "indicators",
+    "rootNodeUpdated",
+    "gl_color",
+}
+
+
 def collect(node, class_name, unknown):
+    # allKnobs() / knob(index) is the properties-panel order. knobs() is a dict
+    # and drops unnamed labels and tab markers.
     rows = []
     seen = set()
-    for listed in node.knobs():
+    # allKnobs() is the panel order. knob(index) follows a link to its target
+    # and would record that target too early, then skip it on its own tab.
+    for index, knob in enumerate(node.allKnobs()):
         try:
-            knob = node[listed]
-            canon = knob.name()
+            name = knob.name()
+            knob_class = knob.Class()
+            label = clean(knob.label()).strip()
         except Exception as exc:
-            unknown.append("%s.%s:ERR %s" % (class_name, listed, exc))
-            continue
-        if listed != canon or not canon:
+            unknown.append("%s.#%s:ERR %s" % (class_name, index, exc))
             continue
         identity = id(knob)
         if identity in seen:
             continue
         seen.add(identity)
-        try:
-            flags_invisible = knob.getFlag(nuke.INVISIBLE)
-            start_line = bool(knob.getFlag(nuke.STARTLINE))
-            knob_class = knob.Class()
-        except Exception as exc:
-            unknown.append("%s.%s:ERR %s" % (class_name, canon, exc))
+        if knob_class == "Obsolete_Knob" or knob.getFlag(nuke.INVISIBLE) or not knob.visible():
             continue
-        if knob_class == "Obsolete_Knob" or flags_invisible or knob.label() == "INVISIBLE":
+        if label == "INVISIBLE" or name in SKIP or name.endswith("_panelDropped"):
             continue
-        if canon in NODE_TAB or canon in LAYOUT:
+        # Unnamed tabs close a group. They are not pages in the panel.
+        if knob_class == "Tab_Knob" and not label:
             continue
+        if not name:
+            name = "panel_%d" % index
         try:
             value = clean(knob.toScript())
-            if canon == "kernelSource" and "ImageComputationKernel" in value:
+            if name == "kernelSource" and "ImageComputationKernel" in value:
                 value = ""
-            label = clean(knob.label()).strip() or LABELS.get(canon, canon)
             menu = menu_text(knob)
             lo, hi = slider_ends(knob, value)
+            start = 1 if knob.getFlag(nuke.STARTLINE) else 0
         except Exception as exc:
-            unknown.append("%s.%s:ERR %s" % (class_name, canon, exc))
+            unknown.append("%s.%s:ERR %s" % (class_name, name, exc))
             continue
-        # The mask cluster is one properties row. Nuke's hidden Mask knob is what
-        # used to start that row, and that knob is not part of the visible list.
-        start = 1 if start_line or canon == "maskChannelMask" else 0
-        row = [canon, knob_class, label, value, start]
+        row = [name, knob_class, label, value, start]
         if menu or lo is not None:
             row.extend([menu, lo, hi])
         rows.append(row)

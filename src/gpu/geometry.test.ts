@@ -226,7 +226,7 @@ StickyNote {
   expect(text.some((vertex) => Math.abs(vertex.x - midX) < 8 && Math.abs(vertex.y - midY) < note!.h / 2)).toBe(true);
 });
 
-test("a dot becomes a diamond", () => {
+test("a dot is a circle with an output arrow when nothing follows it", () => {
   const scene = sceneOf(`
 Dot {
  inputs 0
@@ -235,8 +235,33 @@ Dot {
  ypos 0
 }
 `);
+  const dot = scene.nodes.find((node) => node.name === "Dot1");
   const vertices = buildGeometry(scene, 1, null, null);
   expect(vertices.some((vertex) => vertex.mode === 11)).toBe(true);
+  expect(dot).toBeTruthy();
+  expect(vertices.some((vertex) => vertex.mode === 0 && vertex.r < 0.05 && vertex.y > (dot?.y ?? 0) + (dot?.h ?? 0))).toBe(true);
+});
+
+test("a pipe stops at the edge of a dot", () => {
+  const scene = sceneOf(`
+Constant {
+ inputs 0
+ name Constant1
+ xpos 0
+ ypos 0
+}
+Dot {
+ name Dot1
+ xpos 34
+ ypos 40
+}
+`);
+  const dot = scene.nodes.find((node) => node.name === "Dot1");
+  const vertices = buildGeometry(scene, 1, null, null);
+  const centerX = (dot?.x ?? 0) + (dot?.w ?? 0) / 2;
+  const centerY = (dot?.y ?? 0) + (dot?.h ?? 0) / 2;
+  expect(vertices.some((vertex) => vertex.mode === 0 && Math.abs(vertex.x - centerX) < 1 && Math.abs(vertex.y - (dot?.y ?? 0)) < 1)).toBe(true);
+  expect(vertices.some((vertex) => vertex.mode === 0 && Math.abs(vertex.x - centerX) < 1 && Math.abs(vertex.y - centerY) < 1)).toBe(false);
 });
 
 test("a pipe into a viewer is dashed", () => {

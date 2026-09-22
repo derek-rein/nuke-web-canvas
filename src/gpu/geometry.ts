@@ -52,7 +52,7 @@ const MODE_POINT = 7;
 const MODE_PARTICLE = 8;
 const MODE_INPUT = 9;
 const MODE_OUTPUT = 10;
-const MODE_DIAMOND = 11;
+const MODE_DOT = 11;
 const TEXT_ZOOM = 0.28;
 const EXPRESSION_LINK: [number, number, number, number] = [0x71 / 255, 0xc9 / 255, 0x73 / 255, 1];
 const CLONE_LINK: [number, number, number, number] = [0xe8 / 255, 0x78 / 255, 0x30 / 255, 1];
@@ -105,7 +105,13 @@ export function buildGeometry(
 
 function pushNode(vertices: Vertex[], node: DagNode, outputConnected: boolean): void {
   if (node.kind === "dot") {
-    pushQuad(vertices, node.x, node.y, node.w, node.h, node.color, MODE_DIAMOND, node.w / 2);
+    const radius = node.w / 2 - 0.6;
+    pushQuad(vertices, node.x, node.y, node.w, node.h, node.color, MODE_DOT, radius);
+    if (!outputConnected) {
+      const centerX = node.x + node.w / 2;
+      const bottom = node.y + node.h;
+      pushArrow(vertices, { x: centerX, y: bottom - 1 }, { x: centerX, y: bottom + 8 }, PORT, 8, 4.5);
+    }
     return;
   }
   if (node.postage) {
@@ -259,6 +265,9 @@ function pushQuad(
 
 function pushPipe(vertices: Vertex[], from: Anchor, to: Anchor, dotted: boolean): void {
   const samples = pipeSamples(from, to, 20);
+  // Dot anchors sit at the center. The arrow should meet the circle, not disappear inside it.
+  if (to.side === "center") pullInside(samples, samples.length - 1, 6);
+  if (from.side === "center") pullInside(samples, 0, 6);
   const width = 2;
   const color = pipeColor(from, to);
   for (let index = 0; index < samples.length - 1; index += 1) {
@@ -439,6 +448,22 @@ function pipeColor(
   const dx = Math.abs(to.x - from.x);
   const dy = to.y - from.y;
   return dy > dx ? PIPE_DOWN : PIPE_OTHER;
+}
+
+function pullInside(samples: Array<{ x: number; y: number }>, index: number, distance: number): void {
+  const point = samples[index];
+  const neighbor = samples[index === 0 ? 1 : index - 1];
+  if (!point || !neighbor) return;
+  const outward = index === 0;
+  const dx = outward ? neighbor.x - point.x : point.x - neighbor.x;
+  const dy = outward ? neighbor.y - point.y : point.y - neighbor.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const shift = Math.min(distance, Math.max(0, length - 1));
+  const ux = dx / length;
+  const uy = dy / length;
+  samples[index] = outward
+    ? { x: point.x + ux * shift, y: point.y + uy * shift }
+    : { x: point.x - ux * shift, y: point.y - uy * shift };
 }
 
 function pushSegment(

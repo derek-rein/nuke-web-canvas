@@ -52,8 +52,15 @@ test("a default Blur panel matches Nuke", () => {
   expect(control(panel, "Blur", "filter").value).toBe("gaussian");
   expect(control(panel, "Blur", "quality")).toMatchObject({ value: "15", min: null, max: null, startLine: false });
   expect(control(panel, "Blur", "crop").checked).toBe(true);
-  expect(control(panel, "Blur", "maskChannelMask").startLine).toBe(true);
-  expect(control(panel, "Blur", "maskChannelInput")).toMatchObject({ label: "mask", value: "none", startLine: false });
+  const blurNames = panel.tabs.find((tab) => tab.name === "Blur")?.controls.map((control) => control.name) ?? [];
+  expect(blurNames.slice(0, 5)).toEqual(["channels", "size", "filter", "quality", "crop"]);
+  expect(blurNames.indexOf("mix")).toBeGreaterThan(blurNames.indexOf("crop"));
+  expect(panel.tabs.find((tab) => tab.name === "Blur")?.controls.some((control) => control.label === "mask")).toBe(true);
+  expect(control(panel, "Blur", "maskChannelInput")).toMatchObject({ label: "", value: "none", startLine: false });
+  const nodeNames = panel.tabs.find((tab) => tab.name === "Node")?.controls.map((control) => control.name) ?? [];
+  expect(nodeNames[0]).toBe("label");
+  expect(nodeNames.indexOf("hide_input")).toBeGreaterThan(nodeNames.indexOf("note_font"));
+  expect(nodeNames.indexOf("postage_stamp")).toBeGreaterThan(nodeNames.indexOf("hide_input"));
   expect(control(panel, "Blur", "mix")).toMatchObject({ value: "1", min: 0, max: 1 });
   expect(control(panel, "Node", "hide_input").checked).toBe(false);
   expect(panel.tabs.flatMap((tab) => tab.controls).some((item) => item.name.endsWith("_panelDropped"))).toBe(false);
@@ -119,7 +126,7 @@ end_group
 `,
     "grade_group",
   );
-  expect(control(panel, "Group", "export_as_gizmo").label).toContain("gizmo");
+  expect(control(panel, "Node", "export_as_gizmo").label).toContain("gizmo");
   expect(control(panel, "Grade", "gamma").value).toBe("0.8");
 });
 

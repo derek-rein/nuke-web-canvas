@@ -68,7 +68,7 @@ function rowsOf(controls: PropertyControl[]): PropertyControl[][] {
 function ControlView(props: { control: PropertyControl }): JSX.Element {
   const control = props.control;
   if (control.kind === "text" || control.kind === "help") {
-    if (!control.label) return <hr className="nk-rule" />;
+    if (!control.label.trim()) return <hr className="nk-rule" />;
     return <p className="nk-head" title={control.tooltip}>{control.label}</p>;
   }
   if (control.kind === "spacer" || control.kind === "vspacer") return <div className="nk-gap" />;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, JSX, PointerEvent as ReactPointerEvent } from "react";
 import { createNukeRenderer, type NukeRenderer } from "./gpu/renderer.ts";
 import { buildProperties } from "./nuke/properties.ts";
+import { expressionScope } from "./nuke/scene.ts";
 import { PropertiesPane } from "./PropertiesPane.tsx";
 import type { Camera } from "./nuke/view.ts";
 import { hitTest } from "./nuke/hitTest.ts";
@@ -69,7 +70,7 @@ export function NukeDag(props: {
   const current = parsed.scene ? sceneAt(parsed.scene, path) : null;
   const selectedId = selectedIds.at(-1);
   const selected = current && selectedId ? (current.nodes.find((node) => node.id === selectedId) ?? null) : null;
-  const panel = props.showProperties ? (selected ? buildProperties(selected) : null) : null;
+  const panel = props.showProperties ? (selected && current ? buildProperties(selected, expressionScope(selected, current)) : null) : null;
   const crumbs = useMemo(() => crumbsFor(parsed.scene, path), [parsed.scene, path]);
   sceneRef.current = current;
   // cameraRef is not state, so pan, zoom, fit, and map drag must call this beside renderer.draw().

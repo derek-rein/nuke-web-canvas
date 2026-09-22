@@ -339,7 +339,11 @@ export function parseNukeScript(source: string): ParsedScript {
         continue;
       }
       const body = scanner.readBody();
-      if (ident === "Root" || ident === "LiveGroupInfo") {
+      if (ident === "Root") {
+        Object.assign(root.knobs, body.knobs);
+        continue;
+      }
+      if (ident === "LiveGroupInfo") {
         continue;
       }
       const current = frame();

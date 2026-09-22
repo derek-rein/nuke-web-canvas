@@ -1,6 +1,7 @@
 import type { KnobKind } from "./knobTypes.ts";
 import { KNOB_SCHEMAS, type KnobRow } from "./knobSchemas.ts";
 import type { DagNode } from "./scene.ts";
+import { renderKnob, type TclScope } from "./tcl.ts";
 import type { UserKnob } from "./userKnobs.ts";
 
 export type ChannelMask = { r: boolean; g: boolean; b: boolean; a: boolean };
@@ -83,7 +84,7 @@ const LAYOUT_KNOBS = new Set([
 
 const TAB_KINDS = new Set<KnobKind>(["tab", "tabGroup"]);
 
-export function buildProperties(node: DagNode): PropertyPanel {
+export function buildProperties(node: DagNode, scope?: TclScope): PropertyPanel {
   const schema = (KNOB_SCHEMAS[node.className] ?? []).map(rowToSpec);
   const custom = node.userKnobs.map(userSpec);
   const customByName = new Map<string, KnobSpec>();
@@ -99,19 +100,26 @@ export function buildProperties(node: DagNode): PropertyPanel {
       return;
     }
     const source = override ? { ...override, defaultValue: knob.defaultValue || override.defaultValue } : knob;
-    classControls.push(apply(node.knobs, source, index));
+    const previous = classControls[classControls.length - 1];
+    classControls.push(apply(node.knobs, panelLabel(source, previous), index, scope));
     if (knob.name) emitted.add(knob.name);
   });
   for (const [name, value] of Object.entries(node.knobs)) {
     if (emitted.has(name) || customByName.has(name) || LAYOUT_KNOBS.has(name)) continue;
     if (schema.some((knob) => knob.name === name)) continue;
-    classControls.push(inferControl(name, value, classControls.length));
+    classControls.push(inferControl(name, value, classControls.length, scope));
     emitted.add(name);
   }
   const tabs = packTabs(tabTitle(node.className), classControls).filter((tab) => tab.controls.length > 0);
   const extras = custom.filter((knob) => !knob.hidden && !(knob.name && emitted.has(knob.name)));
-  appendCustom(tabs, extras, node);
-  tabs.push(nodeTab(node));
+  const customTabs: PropertyTab[] = [];
+  appendCustom(customTabs, extras, node, scope);
+  const nodeIndex = tabs.findIndex((tab) => tab.name.toLowerCase() === "node");
+  if (nodeIndex >= 0) tabs.splice(nodeIndex, 0, ...customTabs);
+  else {
+    tabs.push(...customTabs);
+    tabs.push(nodeTab(node, scope));
+  }
   return {
     name: node.name,
     className: node.className,
@@ -219,7 +227,14 @@ export function componentCount(kind: KnobKind): number {
   return 1;
 }
 
-function appendCustom(tabs: PropertyTab[], knobs: KnobSpec[], node: DagNode) {
+function panelLabel(knob: KnobSpec, previous: PropertyControl | undefined): KnobSpec {
+  if (knob.label.trim() || knob.name.startsWith("panel_")) return knob;
+  const opens = knob.startLine || !previous || previous.kind === "tab" || previous.kind === "tabGroup";
+  if (!opens) return knob;
+  return { ...knob, label: knob.name };
+}
+
+function appendCustom(tabs: PropertyTab[], knobs: KnobSpec[], node: DagNode, scope?: TclScope) {
   let current: PropertyTab | null = null;
   knobs.forEach((knob, index) => {
     if (TAB_KINDS.has(knob.kind)) {
@@ -231,7 +246,7 @@ function appendCustom(tabs: PropertyTab[], knobs: KnobSpec[], node: DagNode) {
       current = { id: "user", name: "User", controls: [] };
       tabs.push(current);
     }
-    current.controls.push(apply(node.knobs, knob, 1000 + index));
+    current.controls.push(apply(node.knobs, knob, 1000 + index, scope));
   });
 }
 
@@ -250,24 +265,24 @@ function packTabs(classTab: string, controls: PropertyControl[]): PropertyTab[] 
   return tabs;
 }
 
-function nodeTab(node: DagNode): PropertyTab {
+function nodeTab(node: DagNode, scope?: TclScope): PropertyTab {
   const tile = node.knobs.tile_color ?? cssColor(node.color);
   const controls = [
-    literal(node, "label", "label", "multilineEval", "", true),
-    literal(node, "note_font", "font", "freetype", "", true),
-    literal(node, "note_font_size", "font size", "array", "11", false),
-    literal(node, "note_font_color", "font color", "colorChip", "0", false),
-    literal(node, "hide_input", "hide input", "bool", "false", true),
-    literal(node, "cached", "cached", "bool", "false", true),
-    literal(node, "disable", "disable", "bool", "false", true),
-    literal(node, "dope_sheet", "dope sheet", "bool", "false", true),
-    literal(node, "bookmark", "bookmark", "bool", "false", true),
-    literal(node, "postage_stamp", "postage stamp", "bool", "false", true),
-    literal(node, "postage_stamp_frame", "frame", "array", "1", false),
-    literal(node, "lifetimeStart", "lifetime start", "array", "0", true),
-    literal(node, "lifetimeEnd", "lifetime end", "array", "0", false),
-    literal(node, "useLifetime", "use lifetime", "bool", "false", false),
-    literal(node, "tile_color", "tile color", "colorChip", tile, true),
+    literal(node, "label", "label", "multilineEval", "", true, scope),
+    literal(node, "note_font", "font", "freetype", "", true, scope),
+    literal(node, "note_font_size", "font size", "array", "11", false, scope),
+    literal(node, "note_font_color", "font color", "colorChip", "0", false, scope),
+    literal(node, "hide_input", "hide input", "bool", "false", true, scope),
+    literal(node, "cached", "cached", "bool", "false", true, scope),
+    literal(node, "disable", "disable", "bool", "false", true, scope),
+    literal(node, "dope_sheet", "dope sheet", "bool", "false", true, scope),
+    literal(node, "bookmark", "bookmark", "bool", "false", true, scope),
+    literal(node, "postage_stamp", "postage stamp", "bool", "false", true, scope),
+    literal(node, "postage_stamp_frame", "frame", "array", "1", false, scope),
+    literal(node, "lifetimeStart", "lifetime start", "array", "0", true, scope),
+    literal(node, "lifetimeEnd", "lifetime end", "array", "0", false, scope),
+    literal(node, "useLifetime", "use lifetime", "bool", "false", false, scope),
+    literal(node, "tile_color", "tile color", "colorChip", tile, true, scope),
   ];
   return { id: "node", name: "Node", controls };
 }
@@ -279,6 +294,7 @@ function literal(
   kind: KnobKind,
   fallback: string,
   startLine: boolean,
+  scope?: TclScope,
 ): PropertyControl {
   return apply(
     node.knobs,
@@ -297,10 +313,11 @@ function literal(
       defaultValue: fallback,
     },
     name.length,
+    scope,
   );
 }
 
-function inferControl(name: string, value: string, index: number): PropertyControl {
+function inferControl(name: string, value: string, index: number, scope?: TclScope): PropertyControl {
   const parts = numericParts(value);
   const kind: KnobKind = isOn(value) || value === "false" ? "bool" : parts.length > 1 ? "array" : /^-?\d+(\.\d+)?$/.test(value.trim()) ? "float" : "string";
   return apply(
@@ -320,18 +337,23 @@ function inferControl(name: string, value: string, index: number): PropertyContr
       defaultValue: value,
     },
     index,
+    scope,
   );
 }
 
-function apply(knobs: Record<string, string>, knob: KnobSpec, index: number): PropertyControl {
-  const value = Object.prototype.hasOwnProperty.call(knobs, knob.name) ? (knobs[knob.name] ?? "") : knob.defaultValue;
+const PYTHON_KNOBS = new Set<KnobKind>(["python", "pluginPython", "pyscript"]);
+
+function apply(knobs: Record<string, string>, knob: KnobSpec, index: number, scope?: TclScope): PropertyControl {
+  const raw = Object.prototype.hasOwnProperty.call(knobs, knob.name) ? (knobs[knob.name] ?? "") : knob.defaultValue;
+  const value = displayKnob(raw, knob.kind, scope);
   const menus = menuFor(knob, value);
+  const tooltip = knob.link ? `Linked to ${knob.link}` : value !== raw && !knob.tooltip ? raw : knob.tooltip;
   return {
     id: `${knob.name || knob.kind}-${index}`,
     name: knob.name,
     kind: knob.kind,
     label: knob.label,
-    tooltip: knob.link ? `Linked to ${knob.link}` : knob.tooltip,
+    tooltip,
     value,
     options: menus.options,
     optionLabels: menus.optionLabels,
@@ -342,6 +364,12 @@ function apply(knobs: Record<string, string>, knob: KnobSpec, index: number): Pr
     secret: knob.kind === "password",
     startLine: knob.startLine,
   };
+}
+
+function displayKnob(raw: string, kind: KnobKind, scope?: TclScope): string {
+  if (!scope) return raw;
+  if (PYTHON_KNOBS.has(kind) && raw.trim()) return "python";
+  return renderKnob(raw, scope);
 }
 
 function menuFor(knob: KnobSpec, value: string): { options: string[]; optionLabels: string[] } {

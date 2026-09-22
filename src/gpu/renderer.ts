@@ -241,27 +241,32 @@ function shapeFragment() {
     const pointDist = pointOutline(input.uv.x, input.uv.y, input.halfX, input.halfY);
     const inputDist = wedgeOutline(input.uv.x, input.uv.y, input.halfX, input.halfY, 1);
     const outputDist = wedgeOutline(input.uv.x, input.uv.y, input.halfX, input.halfY, 0);
-    const diamondDist = diamondOutline(input.uv.x, input.uv.y, input.halfX, input.halfY);
+    const isDot = std.abs(input.mode - 11) < 0.5;
     const shaped = std.select(rectDist, circleDist, circleLike);
     const withDeep = std.select(shaped, deepDist, std.abs(input.mode - 6) < 0.5);
     const withPoint = std.select(withDeep, pointDist, std.abs(input.mode - 7) < 0.5);
     const withParticle = std.select(withPoint, particleDist, std.abs(input.mode - 8) < 0.5);
     const withInput = std.select(withParticle, inputDist, std.abs(input.mode - 9) < 0.5);
     const withOutput = std.select(withInput, outputDist, std.abs(input.mode - 10) < 0.5);
-    const dist = std.select(withOutput, diamondDist, std.abs(input.mode - 11) < 0.5);
+    const dist = std.select(withOutput, circleDist, isDot);
     const aa = std.fwidth(dist);
     const coverage = 1 - std.smoothstep(0 - aa, aa, dist);
     const yNorm = input.uv.y / std.max(input.halfY, 1);
-    // yNorm is -1 at the top of the body. Nuke's shade leaves the top at the tile color
-    // and darkens the bottom to about 0.76, measured on the Draw swatch of the color chart.
-    const shade = 1 - (yNorm + 1) * 0.12;
-    const shaded = std.select(body, false, std.abs(input.mode - 11) < 0.5);
+    // yNorm is -1 at the top of the body. Node bodies stay at the tile color on top
+    // and darken to about 0.76 at the bottom. Dots are spheres: white at the top, gray below.
+    const bodyShade = 1 - (yNorm + 1) * 0.12;
+    const dotShade = 1.35 - (yNorm + 1) * 0.45;
+    const shade = std.select(bodyShade, dotShade, isDot);
+    const shaded = std.select(body, true, isDot);
     const lit = std.select(1, shade, shaded);
-    const rim = std.smoothstep(-1.4, -0.2, dist);
-    const rimMul = std.select(1, 1 - rim * 0.22, shaded);
-    const red = input.color.x * lit * rimMul;
-    const green = input.color.y * lit * rimMul;
-    const blue = input.color.z * lit * rimMul;
+    const bodyRim = std.smoothstep(-1.4, -0.2, dist);
+    const dotRim = std.smoothstep(-2.4, 0, dist);
+    const rim = std.select(bodyRim, dotRim, isDot);
+    const rimGain = std.select(0.22, 0.9, isDot);
+    const rimMul = std.select(1, 1 - rim * rimGain, shaded);
+    const red = std.min(input.color.x * lit * rimMul, 1);
+    const green = std.min(input.color.y * lit * rimMul, 1);
+    const blue = std.min(input.color.z * lit * rimMul, 1);
     const alpha = std.select(input.color.w * coverage, input.color.w, input.mode < 0.5);
     return d.vec4f(red, green, blue, alpha);
   });
@@ -322,15 +327,6 @@ function wedgeOutline(px: number, py: number, halfX: number, halfY: number, narr
   const bottom = edgeOutside(px, py, botRightX, halfY, botLeftX, halfY);
   const left = edgeOutside(px, py, botLeftX, halfY, topLeftX, -halfY);
   return std.max(top, std.max(right, std.max(bottom, left)));
-}
-
-function diamondOutline(px: number, py: number, halfX: number, halfY: number): number {
-  "use gpu";
-  const right = edgeOutside(px, py, halfX, 0, 0, halfY);
-  const bottom = edgeOutside(px, py, 0, halfY, -halfX, 0);
-  const left = edgeOutside(px, py, -halfX, 0, 0, -halfY);
-  const top = edgeOutside(px, py, 0, -halfY, halfX, 0);
-  return std.max(right, std.max(bottom, std.max(left, top)));
 }
 
 function roundRectDistance(px: number, py: number, halfX: number, halfY: number, radius: number): number {

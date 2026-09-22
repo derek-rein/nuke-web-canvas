@@ -1,3 +1,5 @@
+import { renderKnob, renderText, selfScope, type TclScope } from "./tcl.ts";
+
 type Kind = "node" | "dot" | "backdrop" | "sticky";
 
 const SKIP_LAYER = new Set(["rgba", "rgb", "all", "-", ""]);
@@ -8,23 +10,24 @@ export function labelLines(
   name: string,
   kind: Kind,
   knobs: Record<string, string>,
+  scope?: TclScope,
 ): string[] {
-  const userLabel = substituteKnobRefs(plainKnob(knobs.label), knobs).trim();
+  const userLabel = show(knobs.label, scope).trim();
   if (kind === "dot") return userLabel ? splitLines(userLabel) : [];
   if (kind === "backdrop" || kind === "sticky") {
     return userLabel ? splitLines(userLabel) : [name];
   }
 
   let heading = name;
-  const file = fileBase(knobs.file);
+  const file = fileBase(show(knobs.file, scope));
   if (file && isFileClass(className)) heading = `${heading}\n${file}`;
-  const operation = plainKnob(knobs.operation);
+  const operation = show(knobs.operation, scope);
   if (operation && className !== "ChannelMerge" && className !== "Precomp" && className !== "LiveGroup") {
     heading = `${heading} (${operation})`;
   }
 
-  let layer = layerFor(className, knobs);
-  const mask = plainKnob(knobs.maskChannelInput);
+  let layer = layerFor(className, knobs, scope);
+  const mask = show(knobs.maskChannelInput, scope);
   if (mask && mask !== "none") layer = layer && layer !== "-" ? `${layer} / ${mask}` : mask;
 
   const parts = [heading];
@@ -33,29 +36,29 @@ export function labelLines(
   return parts.join("\n").split("\n").filter((line) => line.length > 0);
 }
 
-function layerFor(className: string, knobs: Record<string, string>): string {
+function layerFor(className: string, knobs: Record<string, string>, scope?: TclScope): string {
   if (className === "FrameHold") {
-    const frame = plainKnob(knobs.first_frame);
+    const frame = show(knobs.first_frame, scope);
     if (!frame) return "-";
-    const increment = plainKnob(knobs.increment);
+    const increment = show(knobs.increment, scope);
     return increment && increment !== "0" ? `frame ${frame}+n*${increment}` : `frame ${frame}`;
   }
   if (className === "Copy") {
     const rows: string[] = [];
     for (let index = 0; index < 4; index += 1) {
-      const from = plainKnob(knobs[`from${index}`]);
-      const to = plainKnob(knobs[`to${index}`]);
+      const from = show(knobs[`from${index}`], scope);
+      const to = show(knobs[`to${index}`], scope);
       if (from && to && to !== "none") rows.push(`${from} -> ${to}`);
     }
     return rows.length > 0 ? rows.join("\n") : "-";
   }
   if (className === "ChannelMerge") {
-    const op = mergeSymbol(plainKnob(knobs.operation) || "union");
-    const output = plainKnob(knobs.output) || "rgba";
-    return `${plainKnob(knobs.A) || "rgba"} ${op} ${plainKnob(knobs.B) || "rgba"} =\n${output}`;
+    const op = mergeSymbol(show(knobs.operation, scope) || "union");
+    const output = show(knobs.output, scope) || "rgba";
+    return `${show(knobs.A, scope) || "rgba"} ${op} ${show(knobs.B, scope) || "rgba"} =\n${output}`;
   }
   if (className === "Precomp" || className === "LiveGroup") return "-";
-  return plainKnob(knobs.output) || plainKnob(knobs.channels) || "-";
+  return show(knobs.output, scope) || show(knobs.channels, scope) || "-";
 }
 
 function mergeSymbol(operation: string): string {
@@ -97,13 +100,16 @@ function plainKnob(value: string | undefined): string {
   return trimmed;
 }
 
-/** Resolves the `[value knob]` references gizmos put in their label. */
+/** Resolves TCL in a label. `[python ...]` stays a placeholder. */
 export function substituteKnobRefs(text: string, knobs: Record<string, string>): string {
-  return text.replace(/\[(?:value|knob)\s+([A-Za-z_][\w.]*)\]/g, (_match, reference: string) => {
-    const key = reference.startsWith("this.") ? reference.slice(5) : reference;
-    const value = knobs[key];
-    return value === undefined ? _match : plainKnob(value);
-  });
+  return renderText(text, selfScope(knobs));
+}
+
+function show(raw: string | undefined, scope?: TclScope): string {
+  if (!raw) return "";
+  if (!scope) return plainKnob(raw);
+  const rendered = renderKnob(raw, scope);
+  return rendered === raw ? plainKnob(raw) : rendered;
 }
 
 function splitLines(value: string): string[] {
