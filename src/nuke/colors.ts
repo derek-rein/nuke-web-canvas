@@ -1,67 +1,193 @@
 type Rgba = [number, number, number, number];
 
+// Flat tile colors from a fresh Nuke graph (https://i.imgur.com/4fhVHgy.png).
+// The printed hex on that chart matches the swatch except where the label was copied
+// onto the wrong group. Node bodies darken toward the bottom; these are the top color.
+const KEYER = "6abd45";
+const DRAW = "74c26f";
+const OCIO = "21aa96";
+const GEOTOOLS = "21ab95";
+const COLOR = "84a4d6";
+const MERGE = "5160ac";
+const DEEP = "201b5a";
+const TRANSFORM = "a579a9";
+const CHANNEL = "a03a62";
+const THREED = "9c1b1f";
+const FILTER = "cc804d";
+const TIME = "afa55c";
+const WRITE = "c0be30";
+const STICKY = "cccc80";
+const DEFAULT = "cccccc";
+
 const CLASS_COLORS: Record<string, string> = {
-  Merge2: "2c3f86",
-  ChannelMerge: "2c3f86",
-  Dissolve: "2c3f86",
-  Grade: "6d8199",
-  ColorCorrect: "6d8199",
-  HueCorrect: "6d8199",
-  Clamp: "7085aa",
-  Invert: "798eb3",
-  Copy: "a33966",
-  Shuffle: "812d50",
-  Shuffle2: "812d50",
-  Remove: "812d50",
-  Blur: "b47349",
-  Defocus: "b47349",
-  FilterErode: "b06c3b",
-  Inpaint2: "b06c3b",
-  Roto: "498244",
-  RotoPaint: "498244",
-  Crop: "8d6993",
-  Reformat: "8d6993",
-  CornerPin2D: "8d6993",
-  Transform: "8d6993",
-  TransformMasked: "8d6993",
-  LensDistortion2: "735378",
-  FrameHold: "c6a84a",
-  Text: "e4e4e4",
-  Text2: "e4e4e4",
-  Tracker: "b5b5b5",
-  Tracker4: "b5b5b5",
-  Premult: "c8c8c8",
-  Unpremult: "c8c8c8",
-  Write: "848401",
-  TimeEcho: "9a8e48",
-  TimeClip: "8d8343",
-  Scene: "014500",
-  Axis3: "014500",
-  Axis4: "014500",
-  Camera3: "014500",
-  ScanlineRender: "014500",
-  DepthToPoints: "014500",
+  Keyer: KEYER,
+  HueKeyer: KEYER,
+  IBKColour: KEYER,
+  IBKGizmo: KEYER,
+  Difference: KEYER,
+  ChromaKeyer: KEYER,
+
+  Roto: DRAW,
+  RotoPaint: DRAW,
+  Grid: DRAW,
+  Radial: DRAW,
+  Ramp: DRAW,
+  Rectangle: DRAW,
+  Noise: DRAW,
+  Dither: DRAW,
+
+  OCIOColorSpace: OCIO,
+  OCIODisplay: OCIO,
+  OCIOFileTransform: OCIO,
+  OCIOCDLTransform: OCIO,
+  OCIOLogConvert: OCIO,
+
+  GeoCard: GEOTOOLS,
+  GeoCube: GEOTOOLS,
+  GeoCylinder: GEOTOOLS,
+  GeoSphere: GEOTOOLS,
+  GeoTransform: GEOTOOLS,
+  GeoScene: GEOTOOLS,
+  GeoMerge: GEOTOOLS,
+  GeoScope: GEOTOOLS,
+  GeoBindMaterial: GEOTOOLS,
+  GeoDisplace: GEOTOOLS,
+
+  Add: COLOR,
+  Multiply: COLOR,
+  Gamma: COLOR,
+  Grade: COLOR,
+  ColorCorrect: COLOR,
+  HueCorrect: COLOR,
+  HueShift: COLOR,
+  Clamp: COLOR,
+  Invert: COLOR,
+  Saturation: COLOR,
+  ColorLookup: COLOR,
+  ColorMatrix: COLOR,
+  Colorspace: COLOR,
+  Exposure: COLOR,
+  SoftClip: COLOR,
+  RolloffContrast: COLOR,
+  HistEQ: COLOR,
+  HSVTool: COLOR,
+  Log2Lin: COLOR,
+
+  Merge2: MERGE,
+  ChannelMerge: MERGE,
+  Dissolve: MERGE,
+  Switch: MERGE,
+  Keymix: MERGE,
+
+  DeepRead: DEEP,
+  DeepMerge: DEEP,
+  DeepRecolor: DEEP,
+  DeepCrop: DEEP,
+  DeepTransform: DEEP,
+  DeepHoldout: DEEP,
+  DeepToImage: DEEP,
+  DeepFromImage: DEEP,
+  DeepExpression: DEEP,
+
+  Transform: TRANSFORM,
+  TransformMasked: TRANSFORM,
+  CornerPin2D: TRANSFORM,
+  Crop: TRANSFORM,
+  Reformat: TRANSFORM,
+  Mirror2: TRANSFORM,
+  Position: TRANSFORM,
+  STMap: TRANSFORM,
+  IDistort: TRANSFORM,
+  SphericalTransform: TRANSFORM,
+  LensDistortion: TRANSFORM,
+  LensDistortion2: TRANSFORM,
+  GridWarp3: TRANSFORM,
+  SplineWarp3: TRANSFORM,
+
+  Copy: CHANNEL,
+  Shuffle: CHANNEL,
+  Shuffle2: CHANNEL,
+  ShuffleCopy: CHANNEL,
+  Remove: CHANNEL,
+  AddChannels: CHANNEL,
+
+  Scene: THREED,
+  Axis: THREED,
+  Axis2: THREED,
+  Axis3: THREED,
+  Axis4: THREED,
+  Camera: THREED,
+  Camera2: THREED,
+  Camera3: THREED,
+  ScanlineRender: THREED,
+  Card2: THREED,
+  ReadGeo2: THREED,
+  TransformGeo: THREED,
+  MergeGeo: THREED,
+  DepthToPoints: THREED,
+  Light: THREED,
+  Environment: THREED,
+
+  Blur: FILTER,
+  Defocus: FILTER,
+  Dilate: FILTER,
+  Erode: FILTER,
+  FilterErode: FILTER,
+  Median: FILTER,
+  Glow: FILTER,
+  Sharpen: FILTER,
+  Emboss: FILTER,
+  Convolve: FILTER,
+  Matrix: FILTER,
+  GodRays: FILTER,
+  Inpaint2: FILTER,
+  Denoise: FILTER,
+  EdgeDetect: FILTER,
+  MotionBlur2D: FILTER,
+  VectorBlur: FILTER,
+  ZDefocus: FILTER,
+  DirBlur: FILTER,
+  Soften: FILTER,
+
+  FrameHold: TIME,
+  TimeOffset: TIME,
+  TimeClip: TIME,
+  TimeEcho: TIME,
+  Retime: TIME,
+  FrameRange: TIME,
+  AppendClip: TIME,
+
+  Write: WRITE,
+  WriteGeo: WRITE,
+
+  StickyNote: STICKY,
+
+  Text: DEFAULT,
+  Text2: DEFAULT,
+  Tracker: DEFAULT,
+  Tracker4: DEFAULT,
+  Premult: DEFAULT,
+  Unpremult: DEFAULT,
+  NoOp: DEFAULT,
+  Dot: DEFAULT,
+  Input: DEFAULT,
+  Output: DEFAULT,
+
   Viewer: "4c9a4c",
   Read: "4d6d8c",
   Constant: "4d6d8c",
   CheckerBoard2: "4d6d8c",
   ColorBars: "4d6d8c",
   ColorWheel: "4d6d8c",
-  Noise: "4d6d8c",
   Group: "5c6770",
   Gizmo: "5c6770",
   LiveGroup: "5c6770",
   VariableGroup: "5c6770",
-  NoOp: "8a8a8a",
-  Dot: "e8e8e8",
-  Input: "b4b4b4",
-  Output: "b4b4b4",
   BackdropNode: "717171",
-  StickyNote: "ccc576",
 };
 
 export function classColor(className: string): Rgba {
-  return rgbHex(CLASS_COLORS[className] ?? "8a8a8a");
+  return rgbHex(CLASS_COLORS[className] ?? DEFAULT);
 }
 
 export function parseTileColor(raw: string | undefined): Rgba | null {
@@ -82,7 +208,8 @@ export function parseTileColor(raw: string | undefined): Rgba | null {
 
 export function textColorFor(color: Rgba): Rgba {
   const luminance = 0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2];
-  return luminance > 0.62 ? [0, 0, 0, 1] : [1, 1, 1, 1];
+  // Nuke draws black labels on the orange, mauve, and gray tiles, and white on merge and deep.
+  return luminance > 0.5 ? [0, 0, 0, 1] : [1, 1, 1, 1];
 }
 
 function rgbHex(hex: string): Rgba {

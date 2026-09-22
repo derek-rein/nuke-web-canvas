@@ -240,14 +240,15 @@ function shapeFragment() {
     const aa = std.fwidth(dist);
     const coverage = 1 - std.smoothstep(0 - aa, aa, dist);
     const yNorm = input.uv.y / std.max(input.halfY, 1);
-    const shade = 1.18 - (yNorm + 1) * 0.2;
+    // yNorm is -1 at the top of the body. Nuke's shade leaves the top at the tile color
+    // and darkens the bottom to about 0.76, measured on the Draw swatch of the color chart.
+    const shade = 1 - (yNorm + 1) * 0.12;
     const lit = std.select(1, shade, body);
-    const rim = std.smoothstep(-2.2, -0.3, dist);
-    const rimMul = std.select(1, 1 - rim * 0.35, body);
-    const highlight = std.select(0, 1 - std.smoothstep(-0.95, -0.45, yNorm), body);
-    const red = std.min(1, input.color.x * lit * rimMul + highlight * 0.22);
-    const green = std.min(1, input.color.y * lit * rimMul + highlight * 0.22);
-    const blue = std.min(1, input.color.z * lit * rimMul + highlight * 0.22);
+    const rim = std.smoothstep(-1.4, -0.2, dist);
+    const rimMul = std.select(1, 1 - rim * 0.22, body);
+    const red = input.color.x * lit * rimMul;
+    const green = input.color.y * lit * rimMul;
+    const blue = input.color.z * lit * rimMul;
     const alpha = std.select(input.color.w * coverage, input.color.w, input.mode < 0.5);
     return d.vec4f(red, green, blue, alpha);
   });
