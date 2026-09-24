@@ -21,7 +21,7 @@ export function labelLines(
   let heading = name;
   const file = fileBase(show(knobs.file, scope));
   if (file && isFileClass(className)) heading = `${heading}\n${file}`;
-  const operation = show(knobs.operation, scope);
+  const operation = show(knobs.operation, scope) || (className === "Keyer" ? "luminance key" : "");
   if (operation && className !== "ChannelMerge" && className !== "Precomp" && className !== "LiveGroup") {
     heading = `${heading} (${operation})`;
   }
@@ -58,7 +58,14 @@ function layerFor(className: string, knobs: Record<string, string>, scope?: TclS
     return `${show(knobs.A, scope) || "rgba"} ${op} ${show(knobs.B, scope) || "rgba"} =\n${output}`;
   }
   if (className === "Precomp" || className === "LiveGroup") return "-";
-  return show(knobs.output, scope) || show(knobs.channels, scope) || "-";
+  if (className === "Keyer") return shortChannel(show(knobs.output, scope) || "rgba.alpha");
+  return shortChannel(show(knobs.output, scope) || show(knobs.channels, scope) || "-");
+}
+
+function shortChannel(value: string): string {
+  const text = value.trim();
+  const dot = text.lastIndexOf(".");
+  return dot >= 0 ? text.slice(dot + 1) : text;
 }
 
 function mergeSymbol(operation: string): string {

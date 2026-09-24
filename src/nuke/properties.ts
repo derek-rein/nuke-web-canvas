@@ -2,6 +2,8 @@ import type { KnobKind } from "./knobTypes.ts";
 import { KNOB_SCHEMAS, type KnobRow } from "./knobSchemas.ts";
 import type { DagNode } from "./scene.ts";
 import { renderKnob, type TclScope } from "./tcl.ts";
+import { primatteModel, type PrimatteModel } from "./primatte.ts";
+import { isShuffleKnob, shuffleModel, type ShuffleModel } from "./shuffle.ts";
 import type { UserKnob } from "./userKnobs.ts";
 
 export type ChannelMask = { r: boolean; g: boolean; b: boolean; a: boolean };
@@ -30,6 +32,8 @@ export type PropertyPanel = {
   className: string;
   color: string;
   tabs: PropertyTab[];
+  shuffle: ShuffleModel | null;
+  primatte: PrimatteModel | null;
 };
 
 type KnobSpec = {
@@ -99,18 +103,28 @@ export function buildProperties(node: DagNode, scope?: TclScope): PropertyPanel 
       if (knob.name) emitted.add(knob.name);
       return;
     }
+    const shufflePlaceholder = (node.className === "Shuffle" || node.className === "Shuffle2") && knob.kind === "string" && knob.name.startsWith("panel_") && !knob.label;
+    if (shufflePlaceholder || isShuffleKnob(node.className, knob.name)) {
+      if (knob.name) emitted.add(knob.name);
+      return;
+    }
     const source = override ? { ...override, defaultValue: knob.defaultValue || override.defaultValue } : knob;
     const previous = classControls[classControls.length - 1];
     classControls.push(apply(node.knobs, panelLabel(source, previous), index, scope));
     if (knob.name) emitted.add(knob.name);
   });
   for (const [name, value] of Object.entries(node.knobs)) {
-    if (emitted.has(name) || customByName.has(name) || LAYOUT_KNOBS.has(name)) continue;
+    if (emitted.has(name) || customByName.has(name) || LAYOUT_KNOBS.has(name) || isShuffleKnob(node.className, name)) continue;
     if (schema.some((knob) => knob.name === name)) continue;
     classControls.push(inferControl(name, value, classControls.length, scope));
     emitted.add(name);
   }
+  const shuffle = shuffleModel(node.className, node.knobs);
+  const primatte = primatteModel(node.className, node.knobs, scope?.width ?? 1920, scope?.height ?? 1080);
   const tabs = packTabs(tabTitle(node.className), classControls).filter((tab) => tab.controls.length > 0);
+  if ((shuffle || primatte) && !tabs.some((tab) => tab.name === tabTitle(node.className))) {
+    tabs.unshift({ id: "class", name: tabTitle(node.className), controls: [] });
+  }
   const extras = custom.filter((knob) => !knob.hidden && !(knob.name && emitted.has(knob.name)));
   const customTabs: PropertyTab[] = [];
   appendCustom(customTabs, extras, node, scope);
@@ -125,6 +139,8 @@ export function buildProperties(node: DagNode, scope?: TclScope): PropertyPanel 
     className: node.className,
     color: cssColor(node.color),
     tabs,
+    shuffle,
+    primatte,
   };
 }
 
@@ -163,6 +179,33 @@ export function formatMark(value: number): string {
   if (!Number.isFinite(value)) return "";
   if (Math.abs(value) >= 100 || Number.isInteger(value)) return String(Math.round(value));
   return value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+export type LookupCurve = { name: string; points: Array<[number, number]> };
+
+/** Named curves stored as `sat {}` or `sat {curve x0 1 x3 1.5}`. */
+export function parseLookupCurves(value: string): LookupCurve[] {
+  const curves: LookupCurve[] = [];
+  for (const match of value.matchAll(/([A-Za-z0-9_]+)\s*\{([^{}]*)\}/g)) {
+    curves.push({ name: match[1] ?? "", points: lookupPoints(match[2] ?? "") });
+  }
+  return curves;
+}
+
+function lookupPoints(body: string): Array<[number, number]> {
+  const text = body.trim();
+  if (!text) return [];
+  const keyed = text.match(/x\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/gi);
+  if (keyed && keyed.length > 0) {
+    return keyed.map((item) => {
+      const nums = item.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+      return [nums[0] ?? 0, nums[1] ?? 0];
+    });
+  }
+  const nums = text.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  const points: Array<[number, number]> = [];
+  for (let index = 0; index + 1 < nums.length; index += 2) points.push([nums[index] ?? 0, nums[index + 1] ?? 0]);
+  return points;
 }
 
 export function curvePoints(value: string): Array<[number, number]> {
@@ -522,5 +565,6 @@ function isOn(value: string): boolean {
 
 function tabTitle(className: string): string {
   if (className === "Merge2") return "Merge";
+  if (className === "Shuffle2") return "Shuffle";
   return className;
 }

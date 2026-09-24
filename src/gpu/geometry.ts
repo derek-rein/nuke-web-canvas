@@ -59,6 +59,11 @@ const CLONE_LINK: [number, number, number, number] = [0xe8 / 255, 0x78 / 255, 0x
 const PIPE_DOWN: [number, number, number, number] = [0xe6 / 255, 0xae / 255, 0x51 / 255, 1];
 const INPUT_LABEL: [number, number, number, number] = [0xfc / 255, 0xba / 255, 0x63 / 255, 1];
 const PIPE_OTHER: [number, number, number, number] = [0, 0, 0, 1];
+const ARROW_LENGTH = 12;
+const ARROW_HALF = 4;
+const ARROW_OUTLINE: [number, number, number, number] = [0.93, 0.93, 0.93, 1];
+/** How far a dot's incoming tip sits from the center, over the dark rim. */
+const DOT_TIP_FROM_CENTER = 3.2;
 const CLONE_BADGE: [number, number, number, number] = [0xe0 / 255, 0x70 / 255, 0x20 / 255, 1];
 
 
@@ -69,6 +74,7 @@ export function buildGeometry(
   selectedIds: ReadonlySet<string> | null,
 ): Vertex[] {
   const vertices: Vertex[] = [];
+  const heads: ArrowHead[] = [];
   const backdrops = scene.nodes
     .filter((node) => node.kind === "backdrop" || node.kind === "sticky")
     .slice()
@@ -81,7 +87,7 @@ export function buildGeometry(
     if (node.hideInput || node.kind === "backdrop" || node.kind === "sticky") continue;
     for (const pipe of scene.pipes) {
       if (pipe.toId !== node.id) continue;
-      pushPipe(vertices, pipe.from, pipe.to, node.className === "Viewer");
+      pushPipe(vertices, heads, pipe.from, pipe.to, node.className === "Viewer", selectedIds?.has(node.id) ?? false);
       if (atlas && zoom >= TEXT_ZOOM) pushPipeLabel(vertices, pipe, atlas);
     }
   }
@@ -90,7 +96,7 @@ export function buildGeometry(
   for (const node of scene.nodes) {
     if (node.kind === "backdrop" || node.kind === "sticky") continue;
     if (selectedIds?.has(node.id) && atlas && zoom >= TEXT_ZOOM) pushLabelBacking(vertices, node, atlas);
-    pushNode(vertices, node, outputConnected.has(node.id), selectedIds?.has(node.id) ?? false);
+    pushNode(vertices, heads, node, outputConnected.has(node.id), selectedIds?.has(node.id) ?? false);
     if (node.cloneOf && node.kind === "node") pushCloneBadge(vertices, node);
     if (node.disabled) pushCross(vertices, node);
     if (node.cloneOf && node.kind === "node" && atlas && zoom >= TEXT_ZOOM) pushCloneMark(vertices, node, atlas);
@@ -98,6 +104,7 @@ export function buildGeometry(
   for (const node of scene.nodes) {
     if (selectedIds?.has(node.id)) pushSelection(vertices, node);
   }
+  for (const head of heads) pushArrow(vertices, head.from, head.to, head.color, ARROW_LENGTH, ARROW_HALF, head.outlined);
   if (atlas && zoom >= TEXT_ZOOM) {
     for (const node of scene.nodes) pushText(vertices, node, atlas);
   }
@@ -106,7 +113,20 @@ export function buildGeometry(
 
 const DOT_SELECT: [number, number, number, number] = [0xfc / 255, 0xba / 255, 0x63 / 255, 1];
 
-function pushNode(vertices: Vertex[], node: DagNode, outputConnected: boolean, selected: boolean): void {
+type ArrowHead = {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  color: [number, number, number, number];
+  outlined: boolean;
+};
+
+function pushNode(
+  vertices: Vertex[],
+  heads: ArrowHead[],
+  node: DagNode,
+  outputConnected: boolean,
+  selected: boolean,
+): void {
   if (node.kind === "dot") {
     const radius = node.w / 2 - 0.6;
     pushQuad(vertices, node.x, node.y, node.w, node.h, node.color, MODE_DOT, radius);
@@ -125,8 +145,13 @@ function pushNode(vertices: Vertex[], node: DagNode, outputConnected: boolean, s
     }
     if (!outputConnected) {
       const centerX = node.x + node.w / 2;
-      const bottom = node.y + node.h;
-      pushArrow(vertices, { x: centerX, y: bottom - 1 }, { x: centerX, y: bottom + 8 }, PORT, 8, 4.5);
+      const baseY = node.y + node.h / 2 + radius;
+      heads.push({
+        from: { x: centerX, y: baseY },
+        to: { x: centerX, y: baseY + ARROW_LENGTH },
+        color: PORT,
+        outlined: selected,
+      });
     }
     return;
   }
@@ -135,23 +160,33 @@ function pushNode(vertices: Vertex[], node: DagNode, outputConnected: boolean, s
   }
   pushBody(vertices, node);
   pushChannels(vertices, node);
-  pushPorts(vertices, node, outputConnected);
+  pushPorts(heads, node, outputConnected, selected);
 }
 
 const PORT: [number, number, number, number] = [0, 0, 0, 1];
 
-function pushPorts(vertices: Vertex[], node: DagNode, outputConnected: boolean): void {
+function pushPorts(heads: ArrowHead[], node: DagNode, outputConnected: boolean, selected: boolean): void {
   if (node.kind !== "node" || node.className === "Viewer") return;
   if (!outputConnected) {
     const centerX = node.x + node.w / 2;
     const bottom = node.bodyY + node.bodyH;
-    pushArrow(vertices, { x: centerX, y: bottom - 1 }, { x: centerX, y: bottom + 8 }, PORT, 8, 4.5);
+    heads.push({
+      from: { x: centerX, y: bottom },
+      to: { x: centerX, y: bottom + ARROW_LENGTH },
+      color: PORT,
+      outlined: selected,
+    });
   }
   if (node.hideInput || maskIsConnected(node)) return;
   if (node.maskInputs <= 0 && !classHasMask(node.className)) return;
   const midY = node.bodyY + node.bodyH / 2;
   const edge = node.x + node.w;
-  pushArrow(vertices, { x: edge + 7, y: midY }, { x: edge - 1, y: midY }, PORT, 7, 3.5);
+  heads.push({
+    from: { x: edge + ARROW_LENGTH, y: midY },
+    to: { x: edge, y: midY },
+    color: PORT,
+    outlined: selected,
+  });
 }
 
 function maskIsConnected(node: DagNode): boolean {
@@ -279,23 +314,44 @@ function pushQuad(
   }
 }
 
-function pushPipe(vertices: Vertex[], from: Anchor, to: Anchor, dotted: boolean): void {
+function pushPipe(
+  vertices: Vertex[],
+  heads: ArrowHead[],
+  from: Anchor,
+  to: Anchor,
+  dotted: boolean,
+  outlined: boolean,
+): void {
   const samples = pipeSamples(from, to, 20);
-  // Dot anchors sit at the center. The arrow should meet the circle, not disappear inside it.
-  if (to.side === "center") pullInside(samples, samples.length - 1, 6);
+  // Tuck a dot's tip over the dark rim. The head is drawn after the sphere.
+  if (to.side === "center") pullInside(samples, samples.length - 1, DOT_TIP_FROM_CENTER);
   if (from.side === "center") pullInside(samples, 0, 6);
   const width = 2;
   const color = pipeColor(from, to);
+  const last = samples[samples.length - 1];
+  const prev = samples[samples.length - 2];
+  const shaftEnd = last && prev ? retreat(prev, last, ARROW_LENGTH) : last;
   for (let index = 0; index < samples.length - 1; index += 1) {
     const a = samples[index];
-    const b = samples[index + 1];
+    let b = samples[index + 1];
     if (!a || !b) continue;
+    if (index === samples.length - 2 && shaftEnd) b = shaftEnd;
     if (dotted) pushDashedSegment(vertices, a, b, width, color);
     else pushSegment(vertices, a, b, width, color);
   }
-  const last = samples[samples.length - 1];
-  const prev = samples[samples.length - 2];
-  if (last && prev) pushArrow(vertices, prev, last, color, 12, 4);
+  if (last && prev) heads.push({ from: prev, to: last, color, outlined });
+}
+
+function retreat(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  distance: number,
+): { x: number; y: number } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const shift = Math.min(distance, Math.max(0, length - 1));
+  return { x: to.x - (dx / length) * shift, y: to.y - (dy / length) * shift };
 }
 
 function pushDashedSegment(
@@ -506,6 +562,33 @@ function pushSegment(
 }
 
 function pushArrow(
+  vertices: Vertex[],
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  color: [number, number, number, number],
+  size: number,
+  halfWidth: number,
+  outlined = false,
+): void {
+  if (outlined) {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const ux = dx / length;
+    const uy = dy / length;
+    pushArrowFill(
+      vertices,
+      { x: from.x - ux * 1.5, y: from.y - uy * 1.5 },
+      { x: to.x + ux * 1.4, y: to.y + uy * 1.4 },
+      ARROW_OUTLINE,
+      size + 2.8,
+      halfWidth + 1.5,
+    );
+  }
+  pushArrowFill(vertices, from, to, color, size, halfWidth);
+}
+
+function pushArrowFill(
   vertices: Vertex[],
   from: { x: number; y: number },
   to: { x: number; y: number },

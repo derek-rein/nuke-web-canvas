@@ -33,6 +33,97 @@ body {
   display: none;
 }
 
+.title {
+  color: #aaa;
+  font-size: 12px;
+}
+
+.check {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  color: #ddd;
+}
+
+.shelf {
+  width: 280px;
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #242424;
+  border-right: 1px solid #111;
+}
+
+.shelf.closed {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.shelf-head,
+.shelf-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+}
+
+.shelf-head button,
+.shelf-filters button,
+.shelf-list button {
+  font: 12px Verdana, sans-serif;
+  color: #eee;
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 3px;
+  padding: 4px 8px;
+}
+
+.shelf-filters button.on {
+  background: #505050;
+}
+
+.shelf-note {
+  margin: 0 8px 8px;
+  color: #9a9a9a;
+  font-size: 11px;
+}
+
+.shelf-search {
+  margin: 0 8px 8px;
+  background: #3a3a3a;
+  color: #eee;
+  border: 1px solid #555;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font: 12px Verdana, sans-serif;
+}
+
+.shelf-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 8px;
+  overflow: auto;
+}
+
+.shelf-list li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 4px;
+}
+
+.shelf-list button {
+  flex: 1;
+  text-align: left;
+}
+
+.shelf-list span {
+  color: #888;
+  font-size: 10px;
+}
+
 .workspace {
   flex: 1;
   display: flex;

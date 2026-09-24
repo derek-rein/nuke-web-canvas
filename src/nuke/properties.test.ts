@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
-import { PropertiesPane } from "../PropertiesPane.tsx";
+import { PropertiesPane, resizeProperties } from "../PropertiesPane.tsx";
 import { KNOB_KINDS } from "./knobTypes.ts";
 import { parseNukeScript } from "./parse.ts";
 import {
@@ -166,6 +166,111 @@ Transform {
   expect(readHtml).toContain('aria-label="Browse"');
   expect(readHtml).toContain(">Frame Range<");
   expect(readHtml).not.toContain('class="nk-slider"');
+});
+
+test("a keyer shows the luminance operation, alpha output, and A B C D range", () => {
+  const panel = panelFor("Keyer {\n inputs 0\n name Keyer1\n}\n", "Keyer1");
+  expect(control(panel, "Keyer", "operation").value).toBe("luminance key");
+  expect(control(panel, "Keyer", "output").value).toBe("rgba.alpha");
+  expect(control(panel, "Keyer", "range")).toMatchObject({ kind: "keyer", value: "0 1 1 1" });
+  const html = renderToStaticMarkup(createElement(PropertiesPane, { panel }));
+  expect(html).toContain('aria-label="Keyer range"');
+  expect(html).toContain(">A<");
+  expect(html).toContain(">B<");
+  expect(html).toContain(">C<");
+  expect(html).toContain(">D<");
+  expect(html).toContain('value="0"');
+  expect(html).toContain('value="1"');
+  expect(html).toContain(">red<");
+  expect(html).not.toContain(">none<");
+});
+
+test("Shuffle draws the channel matrix and Shuffle2 draws layer links", () => {
+  const classic = panelFor("Shuffle {\n inputs 1\n name Shuffle1\n red alpha\n}\n", "Shuffle1");
+  expect(classic.shuffle?.kind).toBe("classic");
+  if (classic.shuffle?.kind === "classic") expect(classic.shuffle.rows[0]?.source).toBe("alpha");
+  const html = renderToStaticMarkup(createElement(PropertiesPane, { panel: classic }));
+  expect(html).toContain("in 1");
+  expect(html).toContain("in 2");
+  expect(classic.tabs.map((tab) => tab.name)).toEqual(["Shuffle", "Node"]);
+  const links = panelFor("Shuffle2 {\n inputs 1\n name Shuffle2\n}\n", "Shuffle2");
+  expect(links.shuffle?.kind).toBe("links");
+  const linkHtml = renderToStaticMarkup(createElement(PropertiesPane, { panel: links }));
+  expect(linkHtml).toContain("Input Layer");
+  expect(linkHtml).toContain("Output Layer");
+  expect(linkHtml).toContain("rgba.red");
+  expect(linkHtml).toContain("rgba.alpha");
+});
+
+test("HueCorrect lists its hue curves over the hue ramp", () => {
+  const panel = panelFor("HueCorrect {\n inputs 0\n name HueCorrect1\n}\n", "HueCorrect1");
+  const hue = control(panel, "HueCorrect", "hue");
+  expect(hue.kind).toBe("lookupCurves");
+  expect(hue.value).toContain("sat {}");
+  expect(hue.value).toContain("sat_thrsh {}");
+  const html = renderToStaticMarkup(createElement(PropertiesPane, { panel }));
+  expect(html).toContain('aria-label="Hue curves"');
+  for (const name of ["sat", "lum", "red", "green", "blue", "r_sup", "g_sup", "b_sup", "sat_thrsh"]) {
+    expect(html).toContain(name);
+  }
+  expect(html).toContain(">reset<");
+});
+
+test("Primatte shows the keyer sections from Nuke's control layout", () => {
+  const panel = panelFor(
+    `Root {
+ format "2048 1556 0 0 2048 1556 1 2K"
+}
+Primatte {
+ inputs 2
+ name Primatte1
+ spillProcess "solid color"
+}
+`,
+    "Primatte1",
+  );
+  expect(panel.primatte).toMatchObject({
+    foreground: "rgb",
+    algorithm: "Primatte",
+    mode: "Smart Select BG Color",
+    spillProcess: "solid color",
+    outputMode: "composite",
+    crop: [0, 0, 2048, 1556],
+  });
+  expect(panel.tabs.map((tab) => tab.name)).toEqual(["Primatte", "Node"]);
+  const html = renderToStaticMarkup(createElement(PropertiesPane, { panel }));
+  expect(html).toContain("Auto-Compute");
+  expect(html).toContain("Spill Process");
+  expect(html).toContain("Adjust Lighting");
+  expect(html).toContain(">x<");
+  expect(html).toContain('value="2048"');
+  expect(html).toContain("Smart Select BG Color");
+});
+
+test("dragging the properties edge resizes it and a short drag collapses it", () => {
+  expect(resizeProperties(520, 100, 40)).toEqual({ width: 580, collapsed: false });
+  expect(resizeProperties(520, 100, 200)).toEqual({ width: 420, collapsed: false });
+  expect(resizeProperties(520, 100, 560).collapsed).toBe(true);
+  expect(resizeProperties(0, 100, -100)).toEqual({ width: 280, collapsed: false });
+  const html = renderToStaticMarkup(createElement(PropertiesPane, { panel: null }));
+  expect(html).toContain('aria-label="Resize properties"');
+});
+
+test("CameraShake center shows the evaluated input dimensions", () => {
+  const panel = panelFor(
+    `Root {
+ format "1920 1080 0 0 1920 1080 1 HD_1080"
+}
+CameraShake2 {
+ inputs 0
+ name CameraShake1
+}
+`,
+    "CameraShake1",
+  );
+  expect(control(panel, "Node", "cs_center").value).toBe("960 540");
+  const label = panel.tabs.flatMap((tab) => tab.controls).find((item) => item.name === "label");
+  expect(label?.value).toBe("10 px at 0.5");
 });
 
 test("knob widgets follow Nuke 17 control shapes", () => {

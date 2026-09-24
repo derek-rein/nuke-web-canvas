@@ -3,14 +3,46 @@
   container-name: dag;
 }
 
+.nk-props-slot {
+  display: flex;
+  flex: 0 0 auto;
+  height: 100%;
+  min-height: 0;
+  min-width: 10px;
+}
+
+.nk-props-grip {
+  position: relative;
+  width: 10px;
+  flex: 0 0 10px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.nk-props-grip::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 2px;
+  background: #555;
+}
+
+.nk-props-grip:hover::after,
+.nk-props-grip:active::after {
+  background: #8ec8ff;
+}
+
 .nk-props {
-  width: 440px;
-  flex: 0 0 440px;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
   height: 100%;
   min-height: 0;
   overflow: auto;
-  background: #323232;
-  color: #e6e6e6;
+  background: #3a3a3a;
+  color: #d0d0d0;
   border-left: 1px solid #1a1a1a;
   font: 11px Verdana, sans-serif;
 }
@@ -37,11 +69,11 @@
 
 .nk-props-head {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
-  padding: 8px;
-  background: #2a2a2a;
-  border-bottom: 1px solid #1a1a1a;
+  padding: 4px 6px;
+  background: #333;
+  border-bottom: 1px solid #111;
 }
 
 .nk-swatch {
@@ -55,38 +87,36 @@
 .nk-name {
   flex: 1;
   min-width: 0;
-  background: #3c3c3c;
+  background: #4a4a4a;
   color: #eee;
-  border: 1px solid #111;
-  border-radius: 2px;
-  padding: 4px 6px;
-}
-
-.nk-class {
-  color: #9a9a9a;
+  border: 1px solid #222;
+  border-radius: 3px;
+  padding: 3px 6px;
 }
 
 .nk-tabs {
   display: flex;
-  gap: 0;
-  padding: 0 8px;
-  background: #2a2a2a;
-  border-bottom: 1px solid #111;
+  gap: 2px;
+  padding: 4px 6px 0;
+  background: #333;
+  border-bottom: 1px solid #222;
+  overflow: auto;
 }
 
 .nk-tabs button {
   background: #3a3a3a;
-  color: #ccc;
-  border: 1px solid #111;
+  color: #c8c8c8;
+  border: 1px solid #222;
   border-bottom: 0;
   border-radius: 3px 3px 0 0;
   padding: 4px 10px;
   font: inherit;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .nk-tabs button[aria-selected="true"] {
-  background: #4a4a4a;
+  background: #4e4e4e;
   color: #fff;
 }
 
@@ -100,6 +130,10 @@
   gap: 6px 10px;
   align-items: center;
   margin: 0 0 6px;
+}
+
+.nk-row:empty {
+  display: none;
 }
 
 .nk-field {
@@ -120,11 +154,15 @@
 .nk-field select,
 .nk-field textarea,
 .nk-channels input,
-.nk-channels select {
-  background: #3e3e3e;
+.nk-channels select,
+.nk-font-style,
+.nk-eq,
+.nk-anim,
+.nk-dim {
+  background: #4a4a4a;
   color: #eee;
-  border: 1px solid #111;
-  border-radius: 2px;
+  border: 1px solid #222;
+  border-radius: 3px;
   font: inherit;
   padding: 2px 4px;
 }
@@ -144,16 +182,37 @@
   padding: 0;
 }
 
-.nk-field textarea {
-  width: 220px;
+.nk-field textarea,
+.nk-note-label {
+  width: 100%;
+  min-width: 240px;
   min-height: 48px;
   resize: vertical;
+}
+
+.nk-note-label {
+  min-height: 120px;
 }
 
 .nk-check {
   display: inline-flex;
   gap: 4px;
   align-items: center;
+  color: #c8c8c8;
+}
+
+.nk-box {
+  width: 13px;
+  height: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #4a4a4a;
+  border: 1px solid #222;
+  border-radius: 2px;
+  color: #eee;
+  font-size: 11px;
+  line-height: 1;
 }
 
 .nk-channels {
@@ -162,16 +221,23 @@
   align-items: center;
 }
 
+.nk-ch-wrap {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  color: #c8c8c8;
+}
+
 .nk-ch {
-  min-width: 14px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 0 3px;
+  justify-content: center;
   border-radius: 2px;
   color: #111;
-  font-size: 10px;
+  font-size: 11px;
+  line-height: 1;
   opacity: 0.45;
 }
 
@@ -202,15 +268,293 @@
 .nk-slider,
 .nk-curve {
   display: block;
+  width: 210px;
+  height: 32px;
 }
 
 .nk-dim {
-  min-width: 14px;
-  padding: 1px 3px;
-  border: 1px solid #111;
-  border-radius: 2px;
-  color: #aaa;
+  min-width: 16px;
+  padding: 1px 4px;
+  color: #ddd;
   text-align: center;
+}
+
+.nk-eq,
+.nk-anim,
+.nk-font-style {
+  min-width: 18px;
+  padding: 1px 4px;
+  color: #ddd;
+}
+
+.nk-font-style {
+  font-weight: bold;
+}
+
+.nk-italic {
+  font-style: italic;
+  font-weight: normal;
+}
+
+.nk-wheel {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid #222;
+  border-radius: 8px;
+  background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+}
+
+.nk-caption {
+  color: #c8c8c8;
+}
+
+.nk-keyer {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.nk-keyer-plot {
+  display: block;
+  width: 260px;
+  height: 140px;
+  background: #000;
+  border: 1px solid #222;
+}
+
+.nk-keyer-fields {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.nk-keyer-side {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nk-hue {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.nk-hue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 72px;
+}
+
+.nk-hue-name {
+  color: #c8c8c8;
+  padding: 1px 4px;
+}
+
+.nk-hue-name.on {
+  background: #505050;
+  color: #fff;
+}
+
+.nk-hue-plot {
+  width: 340px;
+  height: 210px;
+  background: #111;
+  border: 1px solid #222;
+}
+
+.nk-shuffle-head,
+.nk-shuffle-row,
+.nk-noodle-line,
+.nk-noodle-pair {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.nk-shuffle-head {
+  margin-bottom: 6px;
+}
+
+.nk-shuffle-lab {
+  width: auto;
+  flex: none;
+}
+
+.nk-shuffle-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nk-shuffle-col,
+.nk-shuffle-out,
+.nk-shuffle-name {
+  color: #c8c8c8;
+  font-size: 10px;
+  min-width: 14px;
+  text-align: center;
+}
+
+.nk-shuffle-out {
+  min-width: 36px;
+  text-align: left;
+}
+
+.nk-shuffle-join {
+  color: #9a9a9a;
+  width: 12px;
+  text-align: center;
+}
+
+.nk-sh-cell {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid #222;
+  border-radius: 2px;
+  color: #111;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.nk-shuffle-grid.off .nk-shuffle-out {
+  visibility: hidden;
+}
+
+.nk-noodle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nk-noodle-pair {
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.nk-noodle-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.nk-noodle-title {
+  margin-bottom: 4px;
+  padding: 3px 8px;
+  background: #4a4a4a;
+  border: 1px solid #222;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.nk-noodle-title.out {
+  border-top: 3px solid #8fce4a;
+}
+
+.nk-noodle-title.quiet {
+  background: transparent;
+  border-color: transparent;
+  min-height: 18px;
+}
+
+.nk-noodle-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #222;
+  border-radius: 3px;
+}
+
+.nk-noodle-line {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.nk-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 6px;
+  border: 1px solid #111;
+}
+
+.nk-link {
+  width: 36px;
+  border-top: 1px dashed currentColor;
+  color: inherit;
+}
+
+.nk-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 10px 0 4px;
+  font-weight: bold;
+  color: #e6e6e6;
+}
+
+.nk-section hr {
+  flex: 1;
+  border: 0;
+  border-top: 1px solid #555;
+  margin: 0;
+}
+
+.nk-twirly {
+  width: 100%;
+  margin: 3px 0;
+  color: #ddd;
+}
+
+.nk-primatte select {
+  min-width: 140px;
+}
+
+.nk-eyedrop {
+  width: 22px;
+  height: 18px;
+  padding: 0;
+  background: #111;
+  border: 1px solid #888;
+  border-radius: 2px;
+}
+
+.nk-log {
+  position: relative;
+  display: inline-block;
+  width: 180px;
+  height: 28px;
+}
+
+.nk-log-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 8px;
+  border-top: 1px solid #8a8a8a;
+}
+
+.nk-log-handle {
+  position: absolute;
+  top: 3px;
+  width: 3px;
+  height: 10px;
+  background: #e6c36a;
+}
+
+.nk-log-marks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 14px;
+  display: flex;
+  justify-content: space-between;
+  color: #9a9a9a;
+  font-size: 9px;
 }
 
 .nk-axis {
@@ -241,24 +585,28 @@
   flex-basis: 100%;
   width: 100%;
   border: 0;
-  border-top: 1px solid #1a1a1a;
+  border-top: 1px solid #2a2a2a;
   margin: 6px 0;
 }
 
-/* Phone / Storybook iframe: a docked 440px pane zeros the WebGPU canvas. */
+/* Phone / Storybook iframe: a docked pane zeros the WebGPU canvas. */
 @container dag (max-width: 720px) {
-  .nk-props {
+  .nk-props-slot {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(440px, 100%);
-    flex: none;
     z-index: 6;
+    max-width: 100%;
     box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
   }
 
-  .nk-props:has(.nk-props-empty) {
+  .nk-props-slot:has(.nk-props-empty) {
+    width: 10px !important;
+    box-shadow: none;
+  }
+
+  .nk-props-slot:has(.nk-props-empty) .nk-props {
     display: none;
   }
 

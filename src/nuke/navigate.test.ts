@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { enterGroupPath, isEnterGroupKey, isLeaveGroupKey, leaveGroupPath } from "./navigate.ts";
+import { autoExpandPath, enterGroupPath, isEnterGroupKey, isLeaveGroupKey, leaveGroupPath } from "./navigate.ts";
 
 const plain = { key: "Enter", ctrlKey: false, metaKey: false, altKey: false, shiftKey: false };
 
@@ -24,4 +24,15 @@ test("entering appends a group that has a subgraph and leaving pops one level", 
   expect(enterGroupPath([], null)).toBeNull();
   expect(leaveGroupPath(["root", "root/Tool", "root/Tool/Inner"])).toEqual(["root", "root/Tool"]);
   expect(leaveGroupPath([])).toEqual([]);
+});
+
+test("auto expand enters a lone group and leaves a mixed graph alone", () => {
+  expect(autoExpandPath([{ id: "root/Tool", graph: {} }])).toEqual(["root/Tool"]);
+  expect(
+    autoExpandPath([
+      { id: "root/A", graph: {} },
+      { id: "root/B", graph: {} },
+    ]),
+  ).toEqual([]);
+  expect(autoExpandPath([{ id: "root/Grade1", graph: null }])).toEqual([]);
 });

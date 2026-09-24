@@ -57,6 +57,12 @@ test("Nuke 17 quoted TCL and input dimensions evaluate", () => {
   const inner = selfScope({}, 10, "Inner1");
   inner.parent = parent;
   expect(renderText("[value parent.name]", inner)).toBe("Group1");
+  const local = selfScope({ size: "4", translate: "0 {frame}" }, 10, "Blur1");
+  expect(renderKnob("{size}", local)).toBe("4");
+  expect(renderKnob("0 {frame}", local)).toBe("0 10");
+  expect(renderKnob("{x}", local)).toBe("0");
+  expect(renderText("[expression size*3]", local)).toBe("12");
+  expect(renderKnob("{10 20}", local)).toBe("{10 20}");
 });
 
 test("the graph shows evaluated labels and property values", () => {

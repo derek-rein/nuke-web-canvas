@@ -1,0 +1,2148 @@
+{
+  "commit": "b6ebfa3e88fb8cd00d02bd3f5e74b83da2978d9e",
+  "repo": "CreativeLyons/NukeSurvivalToolkit_publicRelease",
+  "files": [
+    {
+      "path": "NukeSurvivalToolkit/nk_files/abs.nk",
+      "name": "abs",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/alpha_binary.nk",
+      "name": "alpha_binary",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/alpha_comparison.nk",
+      "name": "alpha_comparison",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/alpha_exists.nk",
+      "name": "alpha_exists",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/alpha_sum.nk",
+      "name": "alpha_sum",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/bricks.nk",
+      "name": "bricks",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/C4x4.nk",
+      "name": "C4x4",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/check_nan_inf.nk",
+      "name": "check_nan_inf",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/check_negative.nk",
+      "name": "check_negative",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/circles.nk",
+      "name": "circles",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/circles_user.nk",
+      "name": "circles_user",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/coordinates.nk",
+      "name": "coordinates",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/create_inf.nk",
+      "name": "create_inf",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/create_nan.nk",
+      "name": "create_nan",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/deepThickness.nk",
+      "name": "deepThickness",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/deepToDepth.nk",
+      "name": "deepToDepth",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/depth_normalize.nk",
+      "name": "depth_normalize",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/despill_blue.nk",
+      "name": "despill_blue",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/despill_blue_list.nk",
+      "name": "despill_blue_list",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/despill_green.nk",
+      "name": "despill_green",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/despill_green_list.nk",
+      "name": "despill_green_list",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/differenceKey.nk",
+      "name": "differenceKey",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/fBm.nk",
+      "name": "fBm",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/gradient_horizontal.nk",
+      "name": "gradient_horizontal",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/gradient_horizontal_invert.nk",
+      "name": "gradient_horizontal_invert",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/gradient_vertical.nk",
+      "name": "gradient_vertical",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/gradient_vertical_invert.nk",
+      "name": "gradient_vertical_invert",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/GradientCorner.nk",
+      "name": "GradientCorner",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/IBKGizmo_Expression.nk",
+      "name": "IBKGizmo_Expression",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/keying.nk",
+      "name": "keying",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/kill_inf.nk",
+      "name": "kill_inf",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/kill_nan.nk",
+      "name": "kill_nan",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/Lines_Horizontal.nk",
+      "name": "Lines_Horizontal",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/Lines_Horizontal_Animated.nk",
+      "name": "Lines_Horizontal_Animated",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/Lines_Vertical.nk",
+      "name": "Lines_Vertical",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/Lines_Vertical_Animated.nk",
+      "name": "Lines_Vertical_Animated",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/Noise.nk",
+      "name": "Noise",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/normalPass_relight.nk",
+      "name": "normalPass_relight",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_AdditiveKeyerPro.gizmo",
+      "name": "NST_AdditiveKeyerPro",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_AdvancedKeyingTemplate.nk",
+      "name": "NST_AdvancedKeyingTemplate",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_AdvancedKeyingTemplate_Stamps.nk",
+      "name": "NST_AdvancedKeyingTemplate_Stamps",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_aeRefracTHOR.gizmo",
+      "name": "NST_aeRefracTHOR",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_aeRelight2D.gizmo",
+      "name": "NST_aeRelight2D",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_aeShadows.gizmo",
+      "name": "NST_aeShadows",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_AnimationCurve.gizmo",
+      "name": "NST_AnimationCurve",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_AntiAliasingFilter.gizmo",
+      "name": "NST_AntiAliasingFilter",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_aPCard.gizmo",
+      "name": "NST_aPCard",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apChroma.gizmo",
+      "name": "NST_apChroma",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apChromaBlurNew.gizmo",
+      "name": "NST_apChromaBlurNew",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apChromaMergeNew.gizmo",
+      "name": "NST_apChromaMergeNew",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apChromaPremult.gizmo",
+      "name": "NST_apChromaPremult",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apChromaTransformNew.gizmo",
+      "name": "NST_apChromaTransformNew",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apChromaUnpremult.gizmo",
+      "name": "NST_apChromaUnpremult",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apDespill.gizmo",
+      "name": "NST_apDespill",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apDirLight.gizmo",
+      "name": "NST_apDirLight",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apEdgeCrush.gizmo",
+      "name": "NST_apEdgeCrush",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apEdgePush.gizmo",
+      "name": "NST_apEdgePush",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apeGlow.gizmo",
+      "name": "NST_apeGlow",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apeScreenClean.gizmo",
+      "name": "NST_apeScreenClean",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apeScreenGrow.gizmo",
+      "name": "NST_apeScreenGrow",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apFresnel.gizmo",
+      "name": "NST_apFresnel",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apLoop.gizmo",
+      "name": "NST_apLoop",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_aPMatte_v2.gizmo",
+      "name": "NST_aPMatte_v2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apViewerBlocker.gizmo",
+      "name": "NST_apViewerBlocker",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_apVignette.gizmo",
+      "name": "NST_apVignette",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_AutoCropTool.gizmo",
+      "name": "NST_AutoCropTool",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_AutoFlare2.gizmo",
+      "name": "NST_AutoFlare2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_BBoxToFormat.gizmo",
+      "name": "NST_BBoxToFormat",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_BeautifulSkin.gizmo",
+      "name": "NST_BeautifulSkin",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_BiasedSaturation.gizmo",
+      "name": "NST_BiasedSaturation",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_BinaryAlpha.gizmo",
+      "name": "NST_BinaryAlpha",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_BlacksExpon.gizmo",
+      "name": "NST_BlacksExpon",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_BlacksMatch.gizmo",
+      "name": "NST_BlacksMatch",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_bm_CameraShake.gizmo",
+      "name": "NST_bm_CameraShake",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_bm_CurveRemapper.gizmo",
+      "name": "NST_bm_CurveRemapper",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_bm_MatteCheck.gizmo",
+      "name": "NST_bm_MatteCheck",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_bm_NoiseGen.gizmo",
+      "name": "NST_bm_NoiseGen",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_bm_OpticalGlow.gizmo",
+      "name": "NST_bm_OpticalGlow",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_bm_OpticalLightwrap.gizmo",
+      "name": "NST_bm_OpticalLightwrap",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_BokehBuilder.gizmo",
+      "name": "NST_BokehBuilder",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_C44Kernel.gizmo",
+      "name": "NST_C44Kernel",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_CameraNormals.gizmo",
+      "name": "NST_CameraNormals",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_CardToTrack.gizmo",
+      "name": "NST_CardToTrack",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_CardToTrack2.gizmo",
+      "name": "NST_CardToTrack2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_CatsEyeDefocus.gizmo",
+      "name": "NST_CatsEyeDefocus",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_CellNoise.gizmo",
+      "name": "NST_CellNoise",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ChannelCombiner.gizmo",
+      "name": "NST_ChannelCombiner",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ChannelControl.gizmo",
+      "name": "NST_ChannelControl",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ChannelCreator.gizmo",
+      "name": "NST_ChannelCreator",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ChromaSmear.gizmo",
+      "name": "NST_ChromaSmear",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Chromatik.gizmo",
+      "name": "NST_Chromatik",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ColorCopy.gizmo",
+      "name": "NST_ColorCopy",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ColorSampler.gizmo",
+      "name": "NST_ColorSampler",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ColorSmear.gizmo",
+      "name": "NST_ColorSmear",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ConstantPro.gizmo",
+      "name": "NST_ConstantPro",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ContactSheetAuto.gizmo",
+      "name": "NST_ContactSheetAuto",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Contrast.gizmo",
+      "name": "NST_Contrast",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ConvertPNZ.gizmo",
+      "name": "NST_ConvertPNZ",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ConvolutionMatrix.gizmo",
+      "name": "NST_ConvolutionMatrix",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_CornerPin2D_Matrix.gizmo",
+      "name": "NST_CornerPin2D_Matrix",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_CProject.gizmo",
+      "name": "NST_CProject",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_CProject2.gizmo",
+      "name": "NST_CProject2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_CrossProductVector2.gizmo",
+      "name": "NST_CrossProductVector2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_CrossProductVector3.gizmo",
+      "name": "NST_CrossProductVector3",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DasGrain.gizmo",
+      "name": "NST_DasGrain",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Deep2VP.gizmo",
+      "name": "NST_Deep2VP",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Deep2VPosition.gizmo",
+      "name": "NST_Deep2VPosition",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepBoolean.gizmo",
+      "name": "NST_DeepBoolean",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepCopyBBox.gizmo",
+      "name": "NST_DeepCopyBBox",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepCropSoft.gizmo",
+      "name": "NST_DeepCropSoft",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepFromDepth.gizmo",
+      "name": "NST_DeepFromDepth",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepFromPosition.gizmo",
+      "name": "NST_DeepFromPosition",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepHoldoutSmoother.gizmo",
+      "name": "NST_DeepHoldoutSmoother",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepKeyMix.gizmo",
+      "name": "NST_DeepKeyMix",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepMerge_Advanced.gizmo",
+      "name": "NST_DeepMerge_Advanced",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepRecolorMatte.gizmo",
+      "name": "NST_DeepRecolorMatte",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepSampleCount.gizmo",
+      "name": "NST_DeepSampleCount",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeepSer.gizmo",
+      "name": "NST_DeepSer",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DeflickerVelocity.gizmo",
+      "name": "NST_DeflickerVelocity",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DefocusSwirlyBokeh.gizmo",
+      "name": "NST_DefocusSwirlyBokeh",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_deHaze.gizmo",
+      "name": "NST_deHaze",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DespillToColor.gizmo",
+      "name": "NST_DespillToColor",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Diffusion.gizmo",
+      "name": "NST_Diffusion",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DirectionalBlur.gizmo",
+      "name": "NST_DirectionalBlur",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Distance3D.gizmo",
+      "name": "NST_Distance3D",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DistanceBetween_CS.gizmo",
+      "name": "NST_DistanceBetween_CS",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DotProductVector2.gizmo",
+      "name": "NST_DotProductVector2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DotProductVector3.gizmo",
+      "name": "NST_DotProductVector3",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DummyCam.gizmo",
+      "name": "NST_DummyCam",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVP_Shader.gizmo",
+      "name": "NST_DVP_Shader",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVP_ToonShader.gizmo",
+      "name": "NST_DVP_ToonShader",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVPattern.gizmo",
+      "name": "NST_DVPattern",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVPColorCorrect.gizmo",
+      "name": "NST_DVPColorCorrect",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVPfresnel.gizmo",
+      "name": "NST_DVPfresnel",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVPmatte.gizmo",
+      "name": "NST_DVPmatte",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVPortal.gizmo",
+      "name": "NST_DVPortal",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVPrelight.gizmo",
+      "name": "NST_DVPrelight",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVPrelightPT.gizmo",
+      "name": "NST_DVPrelightPT",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVProjection.gizmo",
+      "name": "NST_DVProjection",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVPscene.gizmo",
+      "name": "NST_DVPscene",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVPsetLight.gizmo",
+      "name": "NST_DVPsetLight",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_DVPToImage.gizmo",
+      "name": "NST_DVPToImage",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Edge.gizmo",
+      "name": "NST_Edge",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Edge_Expand.gizmo",
+      "name": "NST_Edge_Expand",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Edge_RimLight.gizmo",
+      "name": "NST_Edge_RimLight",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_EdgeDetectAlias.gizmo",
+      "name": "NST_EdgeDetectAlias",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_EdgeDetectPRO.gizmo",
+      "name": "NST_EdgeDetectPRO",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_EdgeFromAlpha.gizmo",
+      "name": "NST_EdgeFromAlpha",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Emission.gizmo",
+      "name": "NST_Emission",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_EnvReflect_BB.gizmo",
+      "name": "NST_EnvReflect_BB",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Erode_Fine.gizmo",
+      "name": "NST_Erode_Fine",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ErodeSmooth.gizmo",
+      "name": "NST_ErodeSmooth",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ExponBlurSimple.gizmo",
+      "name": "NST_ExponBlurSimple",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ExponGlow.gizmo",
+      "name": "NST_ExponGlow",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_F_P_Project.gizmo",
+      "name": "NST_F_P_Project",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_F_P_Ramp.gizmo",
+      "name": "NST_F_P_Ramp",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_FastComplexityDistort.gizmo",
+      "name": "NST_FastComplexityDistort",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_FillSampler.gizmo",
+      "name": "NST_FillSampler",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_FlareSuperStar.gizmo",
+      "name": "NST_FlareSuperStar",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_FractalBlur.gizmo",
+      "name": "NST_FractalBlur",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_FrameFiller.gizmo",
+      "name": "NST_FrameFiller",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_FrameHoldSpecial.gizmo",
+      "name": "NST_FrameHoldSpecial",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_FrameMedian.gizmo",
+      "name": "NST_FrameMedian",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_fxT_ChromaticAberration.gizmo",
+      "name": "NST_fxT_ChromaticAberration",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_GammaPlus.gizmo",
+      "name": "NST_GammaPlus",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_GenerateMatrix4.gizmo",
+      "name": "NST_GenerateMatrix4",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_GenerateSTMap.gizmo",
+      "name": "NST_GenerateSTMap",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_GeoToPoints.gizmo",
+      "name": "NST_GeoToPoints",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Glass.gizmo",
+      "name": "NST_Glass",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Glow_Exponential.gizmo",
+      "name": "NST_Glow_Exponential",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_GlueP.gizmo",
+      "name": "NST_GlueP",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_GodRaysProjector.gizmo",
+      "name": "NST_GodRaysProjector",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_GradeLayerPass.gizmo",
+      "name": "NST_GradeLayerPass",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_GradMagic.gizmo",
+      "name": "NST_GradMagic",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Grain_Advanced.gizmo",
+      "name": "NST_Grain_Advanced",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_GUI_Switch.gizmo",
+      "name": "NST_GUI_Switch",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_GuidedBlur.gizmo",
+      "name": "NST_GuidedBlur",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_h_gradienteditor.gizmo",
+      "name": "NST_h_gradienteditor",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_h_silk.gizmo",
+      "name": "NST_h_silk",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_h_stickit.gizmo",
+      "name": "NST_h_stickit",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Halation.gizmo",
+      "name": "NST_Halation",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_HeatWave.gizmo",
+      "name": "NST_HeatWave",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_HexColor.gizmo",
+      "name": "NST_HexColor",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_HighlightSuppress.gizmo",
+      "name": "NST_HighlightSuppress",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_HighPass.gizmo",
+      "name": "NST_HighPass",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_HSL_Tool.gizmo",
+      "name": "NST_HSL_Tool",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_iBlurU.gizmo",
+      "name": "NST_iBlurU",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_iConvolve.gizmo",
+      "name": "NST_iConvolve",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ID_Extractor.gizmo",
+      "name": "NST_ID_Extractor",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_iErode.gizmo",
+      "name": "NST_iErode",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_IIDistort.gizmo",
+      "name": "NST_IIDistort",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ImagePlane3D.gizmo",
+      "name": "NST_ImagePlane3D",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_iMorph.gizmo",
+      "name": "NST_iMorph",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_iMorph_v2.gizmo",
+      "name": "NST_iMorph_v2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_InjectMatteChannel.gizmo",
+      "name": "NST_InjectMatteChannel",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_InverseMatrix33.gizmo",
+      "name": "NST_InverseMatrix33",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_InverseMatrix44.gizmo",
+      "name": "NST_InverseMatrix44",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_InvertAxis.gizmo",
+      "name": "NST_InvertAxis",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_InvertMatrix4.gizmo",
+      "name": "NST_InvertMatrix4",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_iTransform_ae.gizmo",
+      "name": "NST_iTransform_ae",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ITransformU.gizmo",
+      "name": "NST_ITransformU",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_KeyChew.gizmo",
+      "name": "NST_KeyChew",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_KeymixBBox.gizmo",
+      "name": "NST_KeymixBBox",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_KillOutline.gizmo",
+      "name": "NST_KillOutline",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_LabelFromRead.gizmo",
+      "name": "NST_LabelFromRead",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_LensEngine.gizmo",
+      "name": "NST_LensEngine",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Lightning3D.gizmo",
+      "name": "NST_Lightning3D",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_LightSwitch.gizmo",
+      "name": "NST_LightSwitch",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_LightSwitchPuppet.nk",
+      "name": "NST_LightSwitchPuppet",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_LightWrapPro.gizmo",
+      "name": "NST_LightWrapPro",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_LineTool.gizmo",
+      "name": "NST_LineTool",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Looper.gizmo",
+      "name": "NST_Looper",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_LumaGrain.gizmo",
+      "name": "NST_LumaGrain",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_LumaKeyer.gizmo",
+      "name": "NST_LumaKeyer",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_LumaToVector3.gizmo",
+      "name": "NST_LumaToVector3",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MagnitudeVector2.gizmo",
+      "name": "NST_MagnitudeVector2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MagnitudeVector3.gizmo",
+      "name": "NST_MagnitudeVector3",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Matrix4x4_Inverse.gizmo",
+      "name": "NST_Matrix4x4_Inverse",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Matrix4x4Math.gizmo",
+      "name": "NST_Matrix4x4Math",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MECfiller.gizmo",
+      "name": "NST_MECfiller",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MergeAll.gizmo",
+      "name": "NST_MergeAll",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MergeAtmos.gizmo",
+      "name": "NST_MergeAtmos",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MergeBlend.gizmo",
+      "name": "NST_MergeBlend",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MirrorBorder.gizmo",
+      "name": "NST_MirrorBorder",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MirrorDimension.gizmo",
+      "name": "NST_MirrorDimension",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MonochromePlus.gizmo",
+      "name": "NST_MonochromePlus",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MorphDissolve.gizmo",
+      "name": "NST_MorphDissolve",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MotionBlurPaint.gizmo",
+      "name": "NST_MotionBlurPaint",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_mScatterGeo.gizmo",
+      "name": "NST_mScatterGeo",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_MultiplyVector3Matrix3.gizmo",
+      "name": "NST_MultiplyVector3Matrix3",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_N_Reflection.gizmo",
+      "name": "NST_N_Reflection",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_NAN_INF_Killer.gizmo",
+      "name": "NST_NAN_INF_Killer",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Noise3D_spin.gizmo",
+      "name": "NST_Noise3D_spin",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Noise3DTexture.gizmo",
+      "name": "NST_Noise3DTexture",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_Noise4D.nk",
+      "name": "NST_Noise4D",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_NoiseAdvanced.gizmo",
+      "name": "NST_NoiseAdvanced",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_NormalizeVector2.gizmo",
+      "name": "NST_NormalizeVector2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_NormalizeVector3.gizmo",
+      "name": "NST_NormalizeVector3",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_NormalsRotate.gizmo",
+      "name": "NST_NormalsRotate",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_NukeZ.gizmo",
+      "name": "NST_NukeZ",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_origami.gizmo",
+      "name": "NST_origami",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_P2N.gizmo",
+      "name": "NST_P2N",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_P2Z.gizmo",
+      "name": "NST_P2Z",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_P_Noise_Advanced.gizmo",
+      "name": "NST_P_Noise_Advanced",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ParticleKiller.gizmo",
+      "name": "NST_ParticleKiller",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ParticleLights.gizmo",
+      "name": "NST_ParticleLights",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_ParticleLights_ExampleScript.nk",
+      "name": "NST_ParticleLights_ExampleScript",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_PerspectiveGuide.gizmo",
+      "name": "NST_PerspectiveGuide",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_PlanarProjection.gizmo",
+      "name": "NST_PlanarProjection",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_PlotScanline.gizmo",
+      "name": "NST_PlotScanline",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_PointCloudKeyer.gizmo",
+      "name": "NST_PointCloudKeyer",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_PosMatte_MJ.gizmo",
+      "name": "NST_PosMatte_MJ",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_PosPattern_MJ.gizmo",
+      "name": "NST_PosPattern_MJ",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_PosProjection_MJ.gizmo",
+      "name": "NST_PosProjection_MJ",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ProductMatrix4.gizmo",
+      "name": "NST_ProductMatrix4",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Pyclopedia.gizmo",
+      "name": "NST_Pyclopedia",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Python_and_TCL.gizmo",
+      "name": "NST_Python_and_TCL",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RadialAdvanced.gizmo",
+      "name": "NST_RadialAdvanced",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RadialDilate.gizmo",
+      "name": "NST_RadialDilate",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RainMaker.gizmo",
+      "name": "NST_RainMaker",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Randomizer.gizmo",
+      "name": "NST_Randomizer",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RankFilter.gizmo",
+      "name": "NST_RankFilter",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RayDeepAO.gizmo",
+      "name": "NST_RayDeepAO",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Reconcile3DFast.gizmo",
+      "name": "NST_Reconcile3DFast",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Relight_bb.gizmo",
+      "name": "NST_Relight_bb",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Relight_Simple.gizmo",
+      "name": "NST_Relight_Simple",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_renameChannels.gizmo",
+      "name": "NST_renameChannels",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ReProject_3D.gizmo",
+      "name": "NST_ReProject_3D",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Rings_of_Power.gizmo",
+      "name": "NST_Rings_of_Power",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RotateMatrix4.gizmo",
+      "name": "NST_RotateMatrix4",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RotateVector2.gizmo",
+      "name": "NST_RotateVector2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RotateVector3.gizmo",
+      "name": "NST_RotateVector3",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RotoCentroid.gizmo",
+      "name": "NST_RotoCentroid",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RotoPaintTransform.gizmo",
+      "name": "NST_RotoPaintTransform",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RotoQC.gizmo",
+      "name": "NST_RotoQC",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_RP_Reformat.gizmo",
+      "name": "NST_RP_Reformat",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ScaleMatrix4.gizmo",
+      "name": "NST_ScaleMatrix4",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_SceneDepthCalculator.gizmo",
+      "name": "NST_SceneDepthCalculator",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ShadowMult.gizmo",
+      "name": "NST_ShadowMult",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_SimpleSSS.gizmo",
+      "name": "NST_SimpleSSS",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_SkyMatte.gizmo",
+      "name": "NST_SkyMatte",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_SliceTool.gizmo",
+      "name": "NST_SliceTool",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Sparky.gizmo",
+      "name": "NST_Sparky",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_SparkyExampleScene.nk",
+      "name": "NST_SparkyExampleScene",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Spill_Correct.gizmo",
+      "name": "NST_Spill_Correct",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_SpotFlare.gizmo",
+      "name": "NST_SpotFlare",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_SpotLight.gizmo",
+      "name": "NST_SpotLight",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_SSMesh.gizmo",
+      "name": "NST_SSMesh",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_SSMesh_demo.nk",
+      "name": "NST_SSMesh_demo",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_STMap_Keying_Setup.nk",
+      "name": "NST_STMap_Keying_Setup",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_STmapInverse.gizmo",
+      "name": "NST_STmapInverse",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_STMapToVector2.gizmo",
+      "name": "NST_STMapToVector2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_streamCart.gizmo",
+      "name": "NST_streamCart",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Suppress_RGBCMY.gizmo",
+      "name": "NST_Suppress_RGBCMY",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Symmetry.gizmo",
+      "name": "NST_Symmetry",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TimeMachine.gizmo",
+      "name": "NST_TimeMachine",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TProject.gizmo",
+      "name": "NST_TProject",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TProject2.gizmo",
+      "name": "NST_TProject2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TransformCutOut.gizmo",
+      "name": "NST_TransformCutOut",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TransformMatrix.gizmo",
+      "name": "NST_TransformMatrix",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TransformMatrix4.gizmo",
+      "name": "NST_TransformMatrix4",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TransformMix.gizmo",
+      "name": "NST_TransformMix",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TransformVector2.gizmo",
+      "name": "NST_TransformVector2",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TransformVector3.gizmo",
+      "name": "NST_TransformVector3",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TranslateMatrix4.gizmo",
+      "name": "NST_TranslateMatrix4",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_TransposeMatrix4.gizmo",
+      "name": "NST_TransposeMatrix4",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Unify3DCoordinate.gizmo",
+      "name": "NST_Unify3DCoordinate",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_UV_Map.gizmo",
+      "name": "NST_UV_Map",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_UV_Mapper.gizmo",
+      "name": "NST_UV_Mapper",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_UVEditor.gizmo",
+      "name": "NST_UVEditor",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_UVEditor_demo_clean.nk",
+      "name": "NST_UVEditor_demo_clean",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Vector2ToSTMap.gizmo",
+      "name": "NST_Vector2ToSTMap",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_vector3DMathExpression.gizmo",
+      "name": "NST_vector3DMathExpression",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Vector3ToMatrix4.gizmo",
+      "name": "NST_Vector3ToMatrix4",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_VectorExtendEdge.gizmo",
+      "name": "NST_VectorExtendEdge",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Vectors_Direction.gizmo",
+      "name": "NST_Vectors_Direction",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Vectors_to_Degrees.gizmo",
+      "name": "NST_Vectors_to_Degrees",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_VectorTracker.gizmo",
+      "name": "NST_VectorTracker",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_viewer_render.gizmo",
+      "name": "NST_viewer_render",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_VoronoiGradient.gizmo",
+      "name": "NST_VoronoiGradient",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_WaterLens.gizmo",
+      "name": "NST_WaterLens",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_WaterLens_sampleScript.nk",
+      "name": "NST_WaterLens_sampleScript",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_waterSchmutz.gizmo",
+      "name": "NST_waterSchmutz",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_waveCustom.gizmo",
+      "name": "NST_waveCustom",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_waveGrade.gizmo",
+      "name": "NST_waveGrade",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_WaveletBlur.gizmo",
+      "name": "NST_WaveletBlur",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_waveMaker.gizmo",
+      "name": "NST_waveMaker",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_waveMerge.gizmo",
+      "name": "NST_waveMerge",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_waveRetime.gizmo",
+      "name": "NST_waveRetime",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_WhiteBalance.gizmo",
+      "name": "NST_WhiteBalance",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_WhiteSoftClip.gizmo",
+      "name": "NST_WhiteSoftClip",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/NST_X_Aton_Examples.nk",
+      "name": "NST_X_Aton_Examples",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_X_Aton_Volumetrics.gizmo",
+      "name": "NST_X_Aton_Volumetrics",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_X_Denoise.gizmo",
+      "name": "NST_X_Denoise",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_X_Distort.gizmo",
+      "name": "NST_X_Distort",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_X_Sharpen.gizmo",
+      "name": "NST_X_Sharpen",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_X_Soften.gizmo",
+      "name": "NST_X_Soften",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_X_Tesla.gizmo",
+      "name": "NST_X_Tesla",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Z2N.gizmo",
+      "name": "NST_Z2N",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_Z2P.gizmo",
+      "name": "NST_Z2P",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/gizmos/NST_ZeroAxis.gizmo",
+      "name": "NST_ZeroAxis",
+      "kind": "gizmo",
+      "folder": "gizmos"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/points.nk",
+      "name": "points",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/points_advanced.nk",
+      "name": "points_advanced",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/radial.nk",
+      "name": "radial",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/radial_gradient.nk",
+      "name": "radial_gradient",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/radial_rays.nk",
+      "name": "radial_rays",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/Random_colors.nk",
+      "name": "Random_colors",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/Random_every_frame.nk",
+      "name": "Random_every_frame",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/Random_every_pixel.nk",
+      "name": "Random_every_pixel",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/STMap_invert.nk",
+      "name": "STMap_invert",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/transform.nk",
+      "name": "transform",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/transform_advanced.nk",
+      "name": "transform_advanced",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/Trunc.nk",
+      "name": "Trunc",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/turbulence.nk",
+      "name": "turbulence",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/twist.nk",
+      "name": "twist",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/UV_to_Vector.nk",
+      "name": "UV_to_Vector",
+      "kind": "nk",
+      "folder": "nk_files"
+    },
+    {
+      "path": "NukeSurvivalToolkit/nk_files/Vector_to_UV.nk",
+      "name": "Vector_to_UV",
+      "kind": "nk",
+      "folder": "nk_files"
+    }
+  ]
+}

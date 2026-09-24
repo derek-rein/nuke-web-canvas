@@ -17,7 +17,7 @@ import {
   viewRect,
   type MinimapFrame,
 } from "./nuke/minimap.ts";
-import { enterGroupPath, isEnterGroupKey, isLeaveGroupKey, leaveGroupPath } from "./nuke/navigate.ts";
+import { autoExpandPath, enterGroupPath, isEnterGroupKey, isLeaveGroupKey, leaveGroupPath } from "./nuke/navigate.ts";
 import { replacementScript } from "./nuke/paste.ts";
 import { parseNukeScript } from "./nuke/parse.ts";
 import { neighborId, nodesInRect, selectionBounds, toggleId, upstreamIds } from "./nuke/select.ts";
@@ -34,6 +34,10 @@ export function NukeDag(props: {
   onSelectNode?: (node: DagNode | null) => void;
   onScriptChange?: (script: string) => void;
   showProperties?: boolean;
+  /** Group trail. On unless a caller turns it off. */
+  showBreadcrumbs?: boolean;
+  /** Step into the only group when the script loads. */
+  autoExpand?: boolean;
 }): JSX.Element {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -103,8 +107,13 @@ export function NukeDag(props: {
     fittedScene.current = null;
     setOverrideScript(null);
     cancelGesture();
-    setPath([]);
-  }, [props.script]);
+    try {
+      const scene = buildScene(parseNukeScript(props.script), measureDagText);
+      setPath(props.autoExpand ? autoExpandPath(scene.nodes) : []);
+    } catch {
+      setPath([]);
+    }
+  }, [props.script, props.autoExpand]);
 
   useEffect(() => () => endGesture.current?.(), []);
 
@@ -615,7 +624,7 @@ export function NukeDag(props: {
           }}
         />
       ) : null}
-      <nav
+      {props.showBreadcrumbs !== false ? <nav
         style={{
           position: "absolute",
           top: 8,
@@ -652,7 +661,7 @@ export function NukeDag(props: {
             </button>
           </span>
         ))}
-      </nav>
+      </nav> : null}
       {current?.nodes.some((node) => node.id === selectedIds.at(-1) && node.graph) ? (
         <p
           style={{

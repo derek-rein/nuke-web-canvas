@@ -11,6 +11,21 @@ const preview: Preview = {
   },
   initialGlobals: {
     backgrounds: { value: "dag" },
+    properties: "on",
+  },
+  globalTypes: {
+    properties: {
+      description: "Show or hide the properties panel",
+      toolbar: {
+        title: "Properties",
+        icon: "sidebaralt",
+        items: [
+          { value: "on", icon: "sidebaralt", title: "Properties on" },
+          { value: "off", icon: "cross", title: "Properties off" },
+        ],
+        dynamicTitle: true,
+      },
+    },
   },
 };
 

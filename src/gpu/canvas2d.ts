@@ -13,6 +13,10 @@ import type { Camera, NukeRenderer } from "./renderer.ts";
 const BG = "#3c3c3c";
 const PIPE_DOWN = "#e6ae51";
 const PIPE_OTHER = "#000000";
+const ARROW_LENGTH = 12;
+const ARROW_HALF = 4;
+const ARROW_OUTLINE = "#ededed";
+const DOT_TIP_FROM_CENTER = 3.2;
 const SELECT = "#fa9900";
 const DOT_SELECT = "#fcba63";
 const INPUT_LABEL = "#fcba63";
@@ -98,11 +102,12 @@ export function paintScene(
   }
 
   const outputConnected = connectedOutputs(scene);
+  const heads: ArrowHead[] = [];
   for (const node of scene.nodes) {
     if (node.hideInput || node.kind === "backdrop" || node.kind === "sticky") continue;
     for (const pipe of scene.pipes) {
       if (pipe.toId !== node.id) continue;
-      paintPipe(ctx, pipe.from, pipe.to, node.className === "Viewer");
+      paintPipe(ctx, heads, pipe.from, pipe.to, node.className === "Viewer", selected.has(node.id));
     }
   }
   paintLinks(ctx, scene);
@@ -110,7 +115,7 @@ export function paintScene(
   for (const node of scene.nodes) {
     if (node.kind === "backdrop" || node.kind === "sticky") continue;
     if (selected.has(node.id) && camera.zoom >= TEXT_ZOOM) paintLabelBacking(ctx, node);
-    paintNode(ctx, node, outputConnected.has(node.id), selected.has(node.id));
+    paintNode(ctx, heads, node, outputConnected.has(node.id), selected.has(node.id));
   }
 
   if (camera.zoom >= TEXT_ZOOM) {
@@ -126,6 +131,7 @@ export function paintScene(
   for (const node of scene.nodes) {
     if (selected.has(node.id)) paintSelection(ctx, node);
   }
+  for (const head of heads) arrow(ctx, head.from.x, head.from.y, head.to.x, head.to.y, head.color, ARROW_LENGTH, ARROW_HALF, head.outlined);
 }
 
 function canvasWidth(ctx: CanvasRenderingContext2D, cssWidth: number, dpr: number): number {
@@ -175,12 +181,31 @@ function paintSticky(ctx: CanvasRenderingContext2D, node: DagNode): void {
   ctx.fill();
 }
 
-function paintNode(ctx: CanvasRenderingContext2D, node: DagNode, outputConnected: boolean, selected: boolean): void {
+type ArrowHead = {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  color: string;
+  outlined: boolean;
+};
+
+function paintNode(
+  ctx: CanvasRenderingContext2D,
+  heads: ArrowHead[],
+  node: DagNode,
+  outputConnected: boolean,
+  selected: boolean,
+): void {
   if (node.kind === "dot") {
     paintDot(ctx, node, selected);
     if (!outputConnected) {
       const x = node.x + node.w / 2;
-      arrow(ctx, x, node.y + node.h - 1, x, node.y + node.h + 8, "#000", 8, 4.5);
+      const baseY = node.y + node.h / 2 + (node.w / 2 - 0.6);
+      heads.push({
+        from: { x, y: baseY },
+        to: { x, y: baseY + ARROW_LENGTH },
+        color: "#000",
+        outlined: selected,
+      });
     }
     return;
   }
@@ -191,7 +216,7 @@ function paintNode(ctx: CanvasRenderingContext2D, node: DagNode, outputConnected
   }
   paintBody(ctx, node);
   paintChannels(ctx, node);
-  paintPorts(ctx, node, outputConnected);
+  paintPorts(heads, node, outputConnected, selected);
   if (node.cloneOf && node.kind === "node") paintClone(ctx, node);
   if (node.disabled) paintCross(ctx, node);
 }
@@ -302,18 +327,23 @@ function paintChannels(ctx: CanvasRenderingContext2D, node: DagNode): void {
   }
 }
 
-function paintPorts(ctx: CanvasRenderingContext2D, node: DagNode, outputConnected: boolean): void {
+function paintPorts(heads: ArrowHead[], node: DagNode, outputConnected: boolean, selected: boolean): void {
   if (node.kind !== "node" || node.className === "Viewer") return;
   if (!outputConnected) {
     const x = node.x + node.w / 2;
     const y = node.bodyY + node.bodyH;
-    arrow(ctx, x, y - 1, x, y + 8, "#000", 8, 4.5);
+    heads.push({ from: { x, y }, to: { x, y: y + ARROW_LENGTH }, color: "#000", outlined: selected });
   }
   if (node.hideInput || maskConnected(node)) return;
   if (node.maskInputs <= 0 && !classHasMask(node.className)) return;
   const midY = node.bodyY + node.bodyH / 2;
   const edge = node.x + node.w;
-  arrow(ctx, edge + 7, midY, edge - 1, midY, "#000", 7, 3.5);
+  heads.push({
+    from: { x: edge + ARROW_LENGTH, y: midY },
+    to: { x: edge, y: midY },
+    color: "#000",
+    outlined: selected,
+  });
 }
 
 function maskConnected(node: DagNode): boolean {
@@ -348,24 +378,45 @@ function paintCross(ctx: CanvasRenderingContext2D, node: DagNode): void {
   ctx.stroke();
 }
 
-function paintPipe(ctx: CanvasRenderingContext2D, from: Anchor, to: Anchor, dotted: boolean): void {
+function paintPipe(
+  ctx: CanvasRenderingContext2D,
+  heads: ArrowHead[],
+  from: Anchor,
+  to: Anchor,
+  dotted: boolean,
+  outlined: boolean,
+): void {
   const samples = pipeSamples(from, to, 20);
-  if (to.side === "center") pullInside(samples, samples.length - 1, 6);
+  if (to.side === "center") pullInside(samples, samples.length - 1, DOT_TIP_FROM_CENTER);
   if (from.side === "center") pullInside(samples, 0, 6);
   const color = Math.abs(to.x - from.x) < to.y - from.y ? PIPE_DOWN : PIPE_OTHER;
+  const last = samples[samples.length - 1];
+  const prev = samples[samples.length - 2];
+  const shaft = last && prev ? retreat(prev, last, ARROW_LENGTH) : last;
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
   ctx.setLineDash(dotted ? [3, 3] : []);
   ctx.beginPath();
   samples.forEach((point, index) => {
-    if (index === 0) ctx.moveTo(point.x, point.y);
-    else ctx.lineTo(point.x, point.y);
+    const drawn = index === samples.length - 1 && shaft ? shaft : point;
+    if (index === 0) ctx.moveTo(drawn.x, drawn.y);
+    else ctx.lineTo(drawn.x, drawn.y);
   });
   ctx.stroke();
   ctx.setLineDash([]);
-  const last = samples[samples.length - 1];
-  const prev = samples[samples.length - 2];
-  if (last && prev) arrow(ctx, prev.x, prev.y, last.x, last.y, color, 12, 4);
+  if (last && prev) heads.push({ from: prev, to: last, color, outlined });
+}
+
+function retreat(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  distance: number,
+): { x: number; y: number } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const shift = Math.min(distance, Math.max(0, length - 1));
+  return { x: to.x - (dx / length) * shift, y: to.y - (dy / length) * shift };
 }
 
 function paintLinks(ctx: CanvasRenderingContext2D, scene: DagScene): void {
@@ -475,6 +526,28 @@ function pullInside(samples: Array<{ x: number; y: number }>, index: number, dis
 }
 
 function arrow(
+  ctx: CanvasRenderingContext2D,
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+  color: string,
+  size: number,
+  halfWidth: number,
+  outlined = false,
+): void {
+  if (outlined) {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const length = Math.hypot(dx, dy) || 1;
+    const ux = dx / length;
+    const uy = dy / length;
+    arrowFill(ctx, fromX - ux * 1.5, fromY - uy * 1.5, toX + ux * 1.4, toY + uy * 1.4, ARROW_OUTLINE, size + 2.8, halfWidth + 1.5);
+  }
+  arrowFill(ctx, fromX, fromY, toX, toY, color, size, halfWidth);
+}
+
+function arrowFill(
   ctx: CanvasRenderingContext2D,
   fromX: number,
   fromY: number,

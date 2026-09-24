@@ -2,6 +2,7 @@ import type { ParsedScript, RawNode } from "./types.ts";
 import { classColor, parseTileColor, textColorFor } from "./colors.ts";
 import { labelLines } from "./labels.ts";
 import { type TclScope } from "./tcl.ts";
+import { KNOB_SCHEMAS } from "./knobSchemas.ts";
 import { nodeShape, type NodeShape } from "./shapes.ts";
 
 export type Rgba = [number, number, number, number];
@@ -144,11 +145,11 @@ function layout(raw: RawNode, measure: MeasureText, parent?: TclScope): DagScene
 }
 
 export function expressionScope(node: DagNode, scene: DagScene): TclScope {
-  const nodes = new Map(scene.nodes.map((item) => [item.name, item.knobs]));
+  const nodes = new Map(scene.nodes.map((item) => [item.name, knobDefaults(item.className, item.knobs)]));
   return {
     frame: scene.frame,
     label: node.name,
-    knobs: node.knobs,
+    knobs: knobDefaults(node.className, node.knobs),
     nodes,
     width: scene.width,
     height: scene.height,
@@ -170,7 +171,7 @@ function seal(scene: DagScene, measure: MeasureText, owner: TclScope): void {
   scene.height = size.height;
   scene.parentNodes = owner.nodes;
   const nodes = scene.nodes;
-  const byName = new Map(nodes.map((node) => [node.name, node.knobs]));
+  const byName = new Map(nodes.map((node) => [node.name, knobDefaults(node.className, node.knobs)]));
   const byId = new Map(nodes.map((node) => [node.id, node]));
   for (const node of nodes) {
     const scope: TclScope = {
@@ -205,6 +206,18 @@ function resize(node: DagNode, lines: string[], measure: MeasureText): void {
   node.h = sized.h;
   node.bodyH = sized.bodyH;
   node.bodyY = node.y + sized.stamp;
+}
+
+function knobDefaults(className: string, knobs: Record<string, string>): Record<string, string> {
+  const schema = KNOB_SCHEMAS[className];
+  if (!schema) return knobs;
+  const next = { ...knobs };
+  for (const row of schema) {
+    const name = row[0];
+    const fallback = row[3];
+    if (name && next[name] == null && fallback) next[name] = fallback;
+  }
+  return next;
 }
 
 function formatSize(knobs: Record<string, string>, parent?: TclScope): { width: number; height: number } {

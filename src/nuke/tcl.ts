@@ -30,13 +30,71 @@ export function renderText(text: string, scope: TclScope): string {
 export function renderKnob(raw: string, scope: TclScope): string {
   if (!raw) return raw;
   const text = unescapeScript(raw);
-  if (!isExpressionValue(text) && !text.includes("[")) return text;
+  if (hasTopLevelCommand(text) && !text.trim().startsWith("{")) {
+    try {
+      return substitute(stripOne(text), scope, new Set(), 0);
+    } catch {
+      return FAILED;
+    }
+  }
+  const atoms = braceAtoms(text);
+  if (!atoms) {
+    if (!text.includes("[")) return text;
+    try {
+      return substitute(stripOne(text), scope, new Set(), 0);
+    } catch {
+      return FAILED;
+    }
+  }
   try {
-    if (isExpressionValue(text)) return evalExpressionValue(text, scope, new Set(), 0);
-    return substitute(stripOne(text), scope, new Set(), 0);
+    return atoms.map((atom) => renderAtom(atom, scope)).join(" ");
   } catch {
     return FAILED;
   }
+}
+
+function renderAtom(atom: string, scope: TclScope): string {
+  if (!atom.startsWith("{")) {
+    return atom.includes("[") ? substitute(atom, scope, new Set(), 0) : atom;
+  }
+  const inner = atom.slice(1, -1).trim();
+  const groups = topGroups(inner);
+  if (groups) return groups.map((group) => evalComponent(group, scope, new Set(), 0)).join(" ");
+  if (!isExprComponent(inner) && !/^[A-Za-z_][\w.]*$/.test(inner)) return atom;
+  return evalComponent(inner, scope, new Set(), 0);
+}
+
+/** `{expr} literal {expr}` — a knob can mix expression channels with plain numbers. */
+function hasTopLevelCommand(text: string): boolean {
+  let depth = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === "{") depth += 1;
+    else if (char === "}") depth = Math.max(0, depth - 1);
+    else if (char === "[" && depth === 0) return true;
+  }
+  return false;
+}
+
+function braceAtoms(text: string): string[] | null {
+  if (!text.includes("{")) return null;
+  const atoms: string[] = [];
+  let index = 0;
+  while (index < text.length) {
+    while (index < text.length && /\s/.test(text[index] ?? "")) index += 1;
+    if (index >= text.length) break;
+    if (text[index] === "{") {
+      const end = matchBrace(text, index);
+      if (end < 0) return null;
+      atoms.push(text.slice(index, end + 1));
+      index = end + 1;
+      continue;
+    }
+    const start = index;
+    while (index < text.length && !/\s/.test(text[index] ?? "") && text[index] !== "{") index += 1;
+    atoms.push(text.slice(start, index));
+  }
+  return atoms.length > 0 ? atoms : null;
 }
 
 function evalExpressionValue(raw: string, scope: TclScope, stack: Set<string>, depth: number): string {
@@ -48,6 +106,11 @@ function evalExpressionValue(raw: string, scope: TclScope, stack: Set<string>, d
 function evalComponent(body: string, scope: TclScope, stack: Set<string>, depth: number): string {
   const text = body.trim();
   if (text === "curve" || text.startsWith("curve ") || text.startsWith("curve\t")) return sampleCurve(text, scope.frame);
+  if (/^[A-Za-z_][\w.]*$/.test(text)) {
+    const resolved = resolvePath(text, scope, stack, depth);
+    if (resolved === undefined) return text;
+    return presentLiteral(resolved);
+  }
   const quoted = wholeQuoted(text);
   if (quoted != null) {
     const substituted = substitute(quoted, scope, stack, depth);
@@ -183,7 +246,7 @@ function evalCommand(body: string, scope: TclScope, stack: Set<string>, depth: n
     const resolved = resolvePath(path, scope, stack, depth);
     return resolved === undefined ? `[value ${args.join(" ")}]` : presentLiteral(resolved);
   }
-  if (command === "expr") return evalExpr(args.join(" "), scope, stack, depth);
+  if (command === "expr" || command === "expression") return evalExpr(args.join(" "), scope, stack, depth);
   if (command === "if") return evalIf(args, scope, stack, depth);
   if (command === "return") return args.join(" ");
   if (command === "frame") return String(scope.frame);
@@ -575,6 +638,7 @@ function knobPath(args: string[]): string {
 
 function readPath(path: string, scope: TclScope): string | undefined {
   if (path === "frame" || path === "t") return String(scope.frame);
+  if (path === "x" || path === "y") return "0";
   if (path === "width" || path === "format.w" || /^input\d*\.width$/.test(path)) return String(scope.width);
   if (path === "height" || path === "format.h" || /^input\d*\.height$/.test(path)) return String(scope.height);
   const parts = path.split(".").filter((part) => part.length > 0);

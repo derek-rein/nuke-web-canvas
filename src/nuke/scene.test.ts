@@ -567,6 +567,21 @@ Blur {
   expect(nodeNamed(scene.nodes, "Blur1").labelLines).toEqual(["Blur1", "(alpha)"]);
 });
 
+test("a keyer labels its operation and the output channel", () => {
+  const keyer = nodeNamed(
+    sceneOf(`
+Keyer {
+ inputs 0
+ name Keyer1
+ xpos 0
+ ypos 0
+}
+`).nodes,
+    "Keyer1",
+  );
+  expect(keyer.labelLines).toEqual(["Keyer1 (luminance key)", "(alpha)"]);
+});
+
 test("disable, hide input, and postage stamps change the body", () => {
   const scene = sceneOf(`
 Constant {

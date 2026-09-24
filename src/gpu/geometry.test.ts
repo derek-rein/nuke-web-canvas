@@ -121,18 +121,33 @@ Read {
   const below = vertices.some(
     (vertex) => vertex.y > blur!.bodyY + blur!.bodyH && Math.abs(vertex.x - (blur!.x + blur!.w / 2)) < 8,
   );
+  const maskEdge = blur!.x + blur!.w;
+  const maskMid = blur!.bodyY + blur!.bodyH / 2;
   const maskTab = vertices.some(
     (vertex) =>
       vertex.r === 0 &&
       vertex.g === 0 &&
       vertex.b === 0 &&
-      vertex.x > blur!.x + blur!.w &&
-      Math.abs(vertex.y - (blur!.bodyY + blur!.bodyH / 2)) < 8,
+      vertex.x > maskEdge + 10 &&
+      Math.abs(vertex.y - maskMid) < 6,
+  );
+  const maskTip = vertices.some(
+    (vertex) =>
+      vertex.r === 0 &&
+      vertex.g === 0 &&
+      vertex.b === 0 &&
+      Math.abs(vertex.x - maskEdge) < 0.5 &&
+      Math.abs(vertex.y - maskMid) < 0.5,
   );
   const readMask = vertices.some((vertex) => vertex.x > read!.x + read!.w && vertex.y >= read!.bodyY && vertex.y <= read!.bodyY + read!.bodyH);
   expect(below).toBe(true);
   expect(maskTab).toBe(true);
+  expect(maskTip).toBe(true);
   expect(readMask).toBe(false);
+  const outline = (vertex: { r: number; g: number; b: number }) => vertex.r > 0.9 && vertex.g > 0.9 && vertex.b > 0.9;
+  expect(vertices.some((vertex) => outline(vertex) && vertex.x > maskEdge)).toBe(false);
+  const selected = buildGeometry(scene, 1, null, new Set([blur!.id]));
+  expect(selected.some((vertex) => outline(vertex) && vertex.x > maskEdge + 10)).toBe(true);
 });
 
 test("a connected output does not also draw the loose output arrow", () => {
@@ -160,7 +175,7 @@ Grade {
         vertex.g === 0 &&
         vertex.b === 0 &&
         vertex.y > node.bodyY + node.bodyH + 2 &&
-        vertex.y < node.bodyY + node.bodyH + 12 &&
+        vertex.y <= node.bodyY + node.bodyH + 12 &&
         Math.abs(vertex.x - (node.x + node.w / 2)) < 6,
     );
   expect(under(blur!)).toBe(false);
@@ -194,7 +209,7 @@ Grade {
         vertex.g === 0 &&
         vertex.b === 0 &&
         vertex.y > node.bodyY + node.bodyH + 2 &&
-        vertex.y < node.bodyY + node.bodyH + 12 &&
+        vertex.y <= node.bodyY + node.bodyH + 12 &&
         Math.abs(vertex.x - (node.x + node.w / 2)) < 6,
     );
   expect(under(blur!)).toBe(false);
@@ -267,8 +282,19 @@ Dot {
   const vertices = buildGeometry(scene, 1, null, null);
   const centerX = (dot?.x ?? 0) + (dot?.w ?? 0) / 2;
   const centerY = (dot?.y ?? 0) + (dot?.h ?? 0) / 2;
-  expect(vertices.some((vertex) => vertex.mode === 0 && Math.abs(vertex.x - centerX) < 1 && Math.abs(vertex.y - (dot?.y ?? 0)) < 1)).toBe(true);
-  expect(vertices.some((vertex) => vertex.mode === 0 && Math.abs(vertex.x - centerX) < 1 && Math.abs(vertex.y - centerY) < 1)).toBe(false);
+  const fromCenter = (vertex: { x: number; y: number }) => Math.hypot(vertex.x - centerX, vertex.y - centerY);
+  expect(vertices.some((vertex) => vertex.mode === 0 && Math.abs(fromCenter(vertex) - 3.2) < 0.6)).toBe(true);
+  expect(vertices.some((vertex) => vertex.mode === 0 && fromCenter(vertex) < 1)).toBe(false);
+  const outline = (vertex: { r: number; g: number; b: number }) => vertex.r > 0.9 && vertex.g > 0.9 && vertex.b > 0.9;
+  expect(vertices.some(outline)).toBe(false);
+  const selected = buildGeometry(scene, 1, null, new Set([dot!.id]));
+  expect(selected.some(outline)).toBe(true);
+  const outputBase = (dot?.y ?? 0) + (dot?.h ?? 0) / 2 + ((dot?.w ?? 0) / 2 - 0.6);
+  expect(
+    selected.some(
+      (vertex) => outline(vertex) && Math.abs(vertex.x - centerX) < 8 && vertex.y > outputBase,
+    ),
+  ).toBe(true);
 });
 
 test("a pipe into a viewer is dashed", () => {

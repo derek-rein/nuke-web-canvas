@@ -27,3 +27,10 @@ export function enterGroupPath(
 export function leaveGroupPath(path: readonly string[]): string[] {
   return path.slice(0, -1);
 }
+
+/** Enter the only group on the graph. Several groups stay put so the breadcrumb can name one. */
+export function autoExpandPath(nodes: readonly { id: string; graph: unknown }[]): string[] {
+  const groups = nodes.filter((node) => node.graph);
+  const only = groups.length === 1 ? groups[0] : undefined;
+  return only ? [only.id] : [];
+}
