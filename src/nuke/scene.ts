@@ -63,6 +63,12 @@ export type DagScene = {
   knobs: Record<string, string>;
   /** Frame TCL expressions use. Root `first_frame`, otherwise 1. */
   frame: number;
+  /** Project format width. Expressions read this as `width` and `input.width`. */
+  width: number;
+  /** Project format height. */
+  height: number;
+  /** Nodes in the parent group, for `parent.Node.knob`. */
+  parentNodes: ReadonlyMap<string, Record<string, string>>;
 };
 
 export type MeasureText = (line: string) => number;
@@ -111,17 +117,29 @@ function layout(raw: RawNode, measure: MeasureText, parent?: TclScope): DagScene
     return node;
   });
   const frame = numberKnob(plainNumber(raw.knobs.first_frame)) ?? parent?.frame ?? 1;
+  const size = formatSize(raw.knobs, parent);
   const scene: DagScene = {
     id: raw.id,
     name: raw.name,
     nodes,
     knobs: raw.knobs,
     frame,
+    width: size.width,
+    height: size.height,
+    parentNodes: parent?.nodes ?? new Map(),
     pipes: [],
     links: [],
     bounds: { x: 0, y: 0, w: 1, h: 1 },
   };
-  seal(scene, measure, { frame, label: raw.name, knobs: raw.knobs, nodes: new Map(), parent });
+  seal(scene, measure, {
+    frame,
+    label: raw.name,
+    knobs: raw.knobs,
+    nodes: parent?.nodes ?? new Map(),
+    width: size.width,
+    height: size.height,
+    parent,
+  });
   return scene;
 }
 
@@ -132,17 +150,38 @@ export function expressionScope(node: DagNode, scene: DagScene): TclScope {
     label: node.name,
     knobs: node.knobs,
     nodes,
-    parent: { frame: scene.frame, label: scene.name, knobs: scene.knobs, nodes: new Map() },
+    width: scene.width,
+    height: scene.height,
+    parent: {
+      frame: scene.frame,
+      label: scene.name,
+      knobs: scene.knobs,
+      nodes: scene.parentNodes,
+      width: scene.width,
+      height: scene.height,
+    },
   };
 }
 
 function seal(scene: DagScene, measure: MeasureText, owner: TclScope): void {
+  const size = formatSize(scene.knobs, owner);
   scene.frame = owner.frame;
+  scene.width = size.width;
+  scene.height = size.height;
+  scene.parentNodes = owner.nodes;
   const nodes = scene.nodes;
   const byName = new Map(nodes.map((node) => [node.name, node.knobs]));
   const byId = new Map(nodes.map((node) => [node.id, node]));
   for (const node of nodes) {
-    const scope: TclScope = { frame: owner.frame, label: node.name, knobs: node.knobs, nodes: byName, parent: owner };
+    const scope: TclScope = {
+      frame: owner.frame,
+      label: node.name,
+      knobs: node.knobs,
+      nodes: byName,
+      width: scene.width,
+      height: scene.height,
+      parent: owner,
+    };
     const lines = labelLines(node.className, node.name, node.kind, node.knobs, scope);
     resize(node, lines, measure);
     if (node.graph) seal(node.graph, measure, scope);
@@ -166,6 +205,27 @@ function resize(node: DagNode, lines: string[], measure: MeasureText): void {
   node.h = sized.h;
   node.bodyH = sized.bodyH;
   node.bodyY = node.y + sized.stamp;
+}
+
+function formatSize(knobs: Record<string, string>, parent?: TclScope): { width: number; height: number } {
+  const parsed = parseFormat(knobs.format);
+  if (parsed) return parsed;
+  if (parent && parent.width > 0 && parent.height > 0) return { width: parent.width, height: parent.height };
+  return { width: 1920, height: 1080 };
+}
+
+function parseFormat(raw: string | undefined): { width: number; height: number } | null {
+  if (!raw) return null;
+  const nums = raw
+    .replace(/[{}]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .map(Number)
+    .filter((value) => Number.isFinite(value));
+  const width = nums[0];
+  const height = nums[1];
+  if (width == null || height == null || width <= 0 || height <= 0) return null;
+  return { width, height };
 }
 
 function plainNumber(value: string | undefined): string | undefined {

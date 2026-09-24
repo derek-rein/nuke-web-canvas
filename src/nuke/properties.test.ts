@@ -1,12 +1,21 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
+import { PropertiesPane } from "../PropertiesPane.tsx";
 import { KNOB_KINDS } from "./knobTypes.ts";
 import { parseNukeScript } from "./parse.ts";
 import {
+  axisLabels,
   buildProperties,
+  chipColor,
   curvePoints,
+  gangsUniform,
+  matrixRows,
+  showsSlider,
   sliderFraction,
   type PropertyPanel,
 } from "./properties.ts";
+import { expressionScope } from "./scene.ts";
 import { buildScene } from "./scene.ts";
 import { KNOB_SCHEMA_FAILURES, KNOB_SCHEMA_UNKNOWN, KNOB_SCHEMAS } from "./knobSchemas.ts";
 
@@ -14,7 +23,7 @@ function panelFor(source: string, name: string): PropertyPanel {
   const scene = buildScene(parseNukeScript(source), () => 40);
   const node = scene.nodes.find((item) => item.name === name);
   if (!node) throw new Error(`missing ${name}`);
-  return buildProperties(node);
+  return buildProperties(node, expressionScope(node, scene));
 }
 
 function control(panel: PropertyPanel, tab: string, name: string) {
@@ -128,6 +137,52 @@ end_group
   );
   expect(control(panel, "Node", "export_as_gizmo").label).toContain("gizmo");
   expect(control(panel, "Grade", "gamma").value).toBe("0.8");
+});
+
+test("a transform center evaluates Nuke 17 input TCL", () => {
+  const panel = panelFor(
+    `Root {
+ format "1920 1080 0 0 1920 1080 1 HD_1080"
+}
+Transform {
+ inputs 0
+ name Transform1
+ center {{"\\[value input.width 0]/2"} {"\\[value input.height 0]/2"}}
+}
+`,
+    "Transform1",
+  );
+  expect(control(panel, "Transform", "center").value).toBe("960 540");
+  expect(control(panel, "Transform", "center").kind).toBe("xy");
+  const html = renderToStaticMarkup(createElement(PropertiesPane, { panel }));
+  expect(html).toContain(">x<");
+  expect(html).toContain('value="960"');
+  expect(html).toContain(">y<");
+  expect(html).toContain('value="540"');
+  expect(html).toContain('class="nk-slider"');
+  const read = panelFor("Read {\n inputs 0\n name Read1\n file /plates/shot.exr\n}\n", "Read1");
+  const readHtml = renderToStaticMarkup(createElement(PropertiesPane, { panel: read }));
+  expect(readHtml).toContain('value="/plates/shot.exr"');
+  expect(readHtml).toContain('aria-label="Browse"');
+  expect(readHtml).toContain(">Frame Range<");
+  expect(readHtml).not.toContain('class="nk-slider"');
+});
+
+test("knob widgets follow Nuke 17 control shapes", () => {
+  expect(axisLabels("xy")).toEqual(["x", "y"]);
+  expect(axisLabels("uv")).toEqual(["u", "v"]);
+  expect(axisLabels("bbox")).toEqual(["x", "y", "r", "t"]);
+  expect(axisLabels("box3")).toEqual(["x", "y", "n", "r", "t", "f"]);
+  expect(axisLabels("int")).toBeNull();
+  expect(gangsUniform("color")).toBe(true);
+  expect(gangsUniform("xy")).toBe(false);
+  expect(showsSlider("float")).toBe(true);
+  expect(showsSlider("int")).toBe(false);
+  expect(matrixRows("{ { 0 1 2 } { 3 4 5 } }")).toEqual([
+    ["0", "1", "2"],
+    ["3", "4", "5"],
+  ]);
+  expect(chipColor("4278190080")).toBe("#ff0000");
 });
 
 test("slider fractions stay inside the track", () => {

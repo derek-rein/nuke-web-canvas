@@ -5,19 +5,22 @@ export type TclScope = {
   knobs: Record<string, string>;
   /** Other nodes in the same group, including this one. */
   nodes: ReadonlyMap<string, Record<string, string>>;
+  /** Project format, used by `width`, `height`, and `input.width`. */
+  width: number;
+  height: number;
   parent?: TclScope;
 };
 
 const PYTHON_PLACEHOLDER = "python";
 const FAILED = "tcl";
 
-export function selfScope(knobs: Record<string, string>, frame = 1, label = ""): TclScope {
-  return { frame, label, knobs, nodes: new Map([[label, knobs]]) };
+export function selfScope(knobs: Record<string, string>, frame = 1, label = "", width = 1920, height = 1080): TclScope {
+  return { frame, label, knobs, nodes: new Map([[label, knobs]]), width, height };
 }
 
 /** Substitutes `[...]` TCL in a label or other displayed string. */
 export function renderText(text: string, scope: TclScope): string {
-  return substitute(text, scope, new Set(), 0);
+  return substitute(unescapeScript(text), scope, new Set(), 0);
 }
 
 /**
@@ -26,17 +29,18 @@ export function renderText(text: string, scope: TclScope): string {
  */
 export function renderKnob(raw: string, scope: TclScope): string {
   if (!raw) return raw;
-  if (!isExpressionValue(raw) && !raw.includes("[")) return raw;
+  const text = unescapeScript(raw);
+  if (!isExpressionValue(text) && !text.includes("[")) return text;
   try {
-    if (isExpressionValue(raw)) return evalExpressionValue(raw, scope, new Set(), 0);
-    return substitute(stripOne(raw), scope, new Set(), 0);
+    if (isExpressionValue(text)) return evalExpressionValue(text, scope, new Set(), 0);
+    return substitute(stripOne(text), scope, new Set(), 0);
   } catch {
     return FAILED;
   }
 }
 
 function evalExpressionValue(raw: string, scope: TclScope, stack: Set<string>, depth: number): string {
-  const groups = topGroups(raw.trim());
+  const groups = expressionGroups(raw);
   if (!groups) return substitute(raw, scope, stack, depth);
   return groups.map((group) => evalComponent(unwrap(group), scope, stack, depth)).join(" ");
 }
@@ -44,14 +48,66 @@ function evalExpressionValue(raw: string, scope: TclScope, stack: Set<string>, d
 function evalComponent(body: string, scope: TclScope, stack: Set<string>, depth: number): string {
   const text = body.trim();
   if (text === "curve" || text.startsWith("curve ") || text.startsWith("curve\t")) return sampleCurve(text, scope.frame);
+  const quoted = wholeQuoted(text);
+  if (quoted != null) {
+    const substituted = substitute(quoted, scope, stack, depth);
+    try {
+      return evalExpr(substituted, scope, stack, depth);
+    } catch {
+      return substituted;
+    }
+  }
   if (text.includes("[")) return substitute(text, scope, stack, depth);
   return evalExpr(text, scope, stack, depth);
 }
 
 function isExpressionValue(raw: string): boolean {
-  const groups = topGroups(raw.trim());
+  const groups = expressionGroups(raw);
   if (!groups || groups.length === 0) return false;
   return groups.some((group) => isExprComponent(unwrap(group)));
+}
+
+/** One outer `{...}` in a .nk file can hold several per-channel expressions. */
+function expressionGroups(raw: string): string[] | null {
+  const groups = topGroups(raw.trim());
+  if (!groups) return null;
+  if (groups.length === 1) {
+    const nested = topGroups((groups[0] ?? "").trim());
+    if (nested && nested.length > 1) return nested;
+  }
+  return groups;
+}
+
+function wholeQuoted(text: string): string | null {
+  if (text.length < 2 || text[0] !== '"') return null;
+  let value = "";
+  for (let index = 1; index < text.length; index += 1) {
+    const char = text[index] ?? "";
+    if (char === "\\") {
+      value += text[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
+    if (char === '"') return index === text.length - 1 ? value : null;
+    value += char;
+  }
+  return null;
+}
+
+function unescapeScript(value: string): string {
+  let out = "";
+  for (let index = 0; index < value.length; index += 1) {
+    if (value[index] === "\\" && index + 1 < value.length) {
+      const next = value[index + 1] ?? "";
+      if (next === "[" || next === "]" || next === "{" || next === "}" || next === "$" || next === "\\") {
+        out += next;
+        index += 1;
+        continue;
+      }
+    }
+    out += value[index];
+  }
+  return out;
 }
 
 function isExprComponent(text: string): boolean {
@@ -119,9 +175,13 @@ function evalCommand(body: string, scope: TclScope, stack: Set<string>, depth: n
   const args = words.slice(1);
   if (command === "python") return PYTHON_PLACEHOLDER;
   if (command === "value" || command === "knob") {
-    const path = args[1] ? `${args[0] ?? ""}.${args[1]}` : (args[0] ?? "");
+    const path = knobPath(args);
+    if (command === "knob") {
+      const raw = readPath(path, scope);
+      return raw === undefined ? `[knob ${path}]` : raw;
+    }
     const resolved = resolvePath(path, scope, stack, depth);
-    return resolved === undefined ? `[value ${path}]` : presentLiteral(resolved);
+    return resolved === undefined ? `[value ${args.join(" ")}]` : presentLiteral(resolved);
   }
   if (command === "expr") return evalExpr(args.join(" "), scope, stack, depth);
   if (command === "if") return evalIf(args, scope, stack, depth);
@@ -506,8 +566,17 @@ function resolvePath(path: string, scope: TclScope, stack: Set<string>, depth: n
   }
 }
 
+function knobPath(args: string[]): string {
+  const head = args[0] ?? "";
+  const second = args[1];
+  if (second != null && !/^-?\d+(?:\.\d+)?$/.test(second)) return `${head}.${second}`;
+  return head;
+}
+
 function readPath(path: string, scope: TclScope): string | undefined {
   if (path === "frame" || path === "t") return String(scope.frame);
+  if (path === "width" || path === "format.w" || /^input\d*\.width$/.test(path)) return String(scope.width);
+  if (path === "height" || path === "format.h" || /^input\d*\.height$/.test(path)) return String(scope.height);
   const parts = path.split(".").filter((part) => part.length > 0);
   if (parts[0] === "this") parts.shift();
   if (parts[0] === "parent" && scope.parent) {

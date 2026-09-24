@@ -219,6 +219,87 @@ export function swatchColor(value: string): string | null {
   return null;
 }
 
+const AXIS_LABELS: Partial<Record<KnobKind, readonly string[]>> = {
+  xy: ["x", "y"],
+  xyz: ["x", "y", "z"],
+  uv: ["u", "v"],
+  wh: ["w", "h"],
+  bbox: ["x", "y", "r", "t"],
+  box3: ["x", "y", "n", "r", "t", "f"],
+  scale: ["x", "y"],
+  vec2: ["x", "y"],
+  vec3: ["x", "y", "z"],
+  vec4: ["x", "y", "z", "w"],
+  color: ["r", "g", "b"],
+  acolor: ["r", "g", "b", "a"],
+  positionVector: ["x", "y", "z", "x", "y", "z"],
+};
+
+const GANGED_KINDS = new Set<KnobKind>(["wh", "scale", "color", "acolor"]);
+const SLIDER_KINDS = new Set<KnobKind>(["float", "double", "pixelAspect", "wh", "scale", "color", "acolor"]);
+
+export function axisLabels(kind: KnobKind): readonly string[] | null {
+  return AXIS_LABELS[kind] ?? null;
+}
+
+/** WH, scale, and color start as one field until the components differ. */
+export function gangsUniform(kind: KnobKind): boolean {
+  return GANGED_KINDS.has(kind);
+}
+
+/** Float knobs draw a slider. Int knobs do not. */
+export function showsSlider(kind: KnobKind): boolean {
+  return SLIDER_KINDS.has(kind);
+}
+
+export function matrixRows(value: string): string[][] | null {
+  const text = value.trim();
+  const body = text.startsWith("{") && text.endsWith("}") ? text.slice(1, -1).trim() : text;
+  if (!body.startsWith("{")) return null;
+  const rows: string[][] = [];
+  let index = 0;
+  while (index < body.length) {
+    while (index < body.length && /\s/.test(body[index] ?? "")) index += 1;
+    if (index >= body.length) break;
+    if (body[index] !== "{") return null;
+    const end = matchBraceLocal(body, index);
+    if (end < 0) return null;
+    const cells = body
+      .slice(index + 1, end)
+      .trim()
+      .split(/\s+/)
+      .filter((cell) => cell.length > 0);
+    if (cells.length === 0 || cells.some((cell) => !/^-?\d+(?:\.\d+)?$/.test(cell))) return null;
+    rows.push(cells);
+    index = end + 1;
+  }
+  return rows.length > 0 ? rows : null;
+}
+
+export function chipColor(value: string): string | null {
+  const text = value.trim();
+  if (/^\d+$/.test(text)) {
+    const packed = Number(text);
+    if (!Number.isFinite(packed)) return null;
+    const rgb = Math.floor(packed / 256) % 0x1000000;
+    return `#${rgb.toString(16).padStart(6, "0")}`;
+  }
+  return swatchColor(text);
+}
+
+function matchBraceLocal(text: string, open: number): number {
+  let depth = 0;
+  for (let index = open; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+  return -1;
+}
+
 export function componentCount(kind: KnobKind): number {
   if (kind === "wh" || kind === "xy" || kind === "uv" || kind === "vec2" || kind === "scale") return 2;
   if (kind === "xyz" || kind === "vec3") return 3;

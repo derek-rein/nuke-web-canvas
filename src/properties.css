@@ -213,6 +213,30 @@
   text-align: center;
 }
 
+.nk-axis {
+  color: #9a9a9a;
+  font-size: 10px;
+}
+
+.nk-help {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+}
+
+.nk-chip {
+  width: 28px;
+  height: 18px;
+  padding: 0;
+}
+
+.nk-stack,
+.nk-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
 .nk-rule {
   flex-basis: 100%;
   width: 100%;

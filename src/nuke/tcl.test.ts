@@ -40,11 +40,31 @@ test("a link reads another node's knob and a channel", () => {
   expect(renderKnob("{{[python {1}]}}", scope)).toBe("python");
 });
 
+test("Nuke 17 quoted TCL and input dimensions evaluate", () => {
+  const blur = { size: "{frame*2}" };
+  const scope = selfScope({ size: "{frame*2}" }, 10, "Grade1", 1920, 1080);
+  scope.nodes = new Map([
+    ["Grade1", scope.knobs],
+    ["Blur1", blur],
+  ]);
+  expect(renderKnob("{frame*2}", scope)).toBe("20");
+  expect(renderKnob("{Blur1.size+1}", scope)).toBe("21");
+  expect(renderKnob('{{"\\[value input.width 0]/2"} {"\\[value input.height 0]/2"}}', scope)).toBe("960 540");
+  expect(renderText("[value Blur1.size]", scope)).toBe("20");
+  expect(renderText("[value Blur1.size 12]", scope)).toBe("20");
+  expect(renderText("[knob Blur1.size]", scope)).toBe("{frame*2}");
+  const parent = selfScope({ name: "Group1" }, 10, "Group1");
+  const inner = selfScope({}, 10, "Inner1");
+  inner.parent = parent;
+  expect(renderText("[value parent.name]", inner)).toBe("Group1");
+});
+
 test("the graph shows evaluated labels and property values", () => {
   const scene = buildScene(
     parseNukeScript(`
 Root {
  first_frame 10
+ format "1920 1080 0 0 1920 1080 1 HD_1080"
 }
 Blur {
  inputs 0
@@ -66,6 +86,8 @@ NoOp {
   );
   const blur = scene.nodes.find((node) => node.name === "Blur1");
   const noop = scene.nodes.find((node) => node.name === "NoOp1");
+  expect(scene.width).toBe(1920);
+  expect(scene.height).toBe(1080);
   expect(blur?.labelLines).toContain("11");
   expect(noop?.labelLines).toEqual(["NoOp1", "blur 10 python"]);
   expect(blur).toBeTruthy();

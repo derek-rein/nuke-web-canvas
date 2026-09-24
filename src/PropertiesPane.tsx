@@ -3,10 +3,15 @@ import type { JSX } from "react";
 import "./properties.css";
 import type { KnobKind } from "./nuke/knobTypes.ts";
 import {
+  axisLabels,
+  chipColor,
   componentCount,
   curvePoints,
   formatMark,
+  gangsUniform,
+  matrixRows,
   numericParts,
+  showsSlider,
   sliderFraction,
   sliderLabeled,
   sliderMarks,
@@ -72,7 +77,10 @@ function rowsOf(controls: PropertyControl[]): PropertyControl[][] {
 
 function ControlView(props: { control: PropertyControl }): JSX.Element {
   const control = props.control;
-  if (control.kind === "text" || control.kind === "help") {
+  if (control.kind === "help") {
+    return <button type="button" className="nk-help" disabled title={control.tooltip || control.label}>?</button>;
+  }
+  if (control.kind === "text") {
     if (!control.label.trim()) return <hr className="nk-rule" />;
     return <p className="nk-head" title={control.tooltip}>{control.label}</p>;
   }
@@ -104,12 +112,25 @@ function Widget(props: { control: PropertyControl }): JSX.Element {
   if (control.kind === "bitmask" || control.kind === "dynamicBitmask") return <Bits control={control} />;
   if (control.kind === "radio") return <Radios control={control} />;
   if (isMenu(control.kind)) return <Menu control={control} />;
-  if (isColor(control.kind) || control.kind === "colorChip" || control.kind === "eyedropper") {
-    const swatch = swatchColor(control.value);
+  if (control.kind === "colorChip") {
+    const swatch = chipColor(control.value) ?? "#000000";
+    return <button type="button" className="nk-swatch nk-chip" disabled style={{ background: swatch }} aria-label={control.value} />;
+  }
+  if (control.kind === "file" || control.kind === "cachedFile") {
+    return (
+      <span className="nk-channels">
+        <input value={control.value} readOnly />
+        <button type="button" disabled aria-label="Browse">…</button>
+      </span>
+    );
+  }
+  if (isColor(control.kind) || control.kind === "eyedropper") {
+    const parts = numericParts(control.value);
+    const swatch = swatchColor(parts.length >= 3 ? parts.slice(0, 3).join(" ") : control.value);
     return (
       <span className="nk-channels">
         {swatch ? <span className="nk-swatch" style={{ background: swatch }} /> : null}
-        <input value={control.value} readOnly />
+        <Numbers control={control} />
       </span>
     );
   }
@@ -185,22 +206,64 @@ function Radios(props: { control: PropertyControl }): JSX.Element {
 
 function Numbers(props: { control: PropertyControl }): JSX.Element {
   const control = props.control;
+  const matrix = control.kind === "array" || control.kind === "multiarray" ? matrixRows(control.value) : null;
+  if (matrix) return <Matrix rows={matrix} />;
   const parts = numericParts(control.value);
   const shown = parts.length > 0 ? parts : [control.value];
-  const count = componentCount(control.kind);
-  const uniform = shown.length <= 1 || shown.every((part) => part === shown[0]);
-  const fields = uniform ? [shown[0] ?? control.value] : shown;
+  const axes = axisLabels(control.kind);
+  if (control.kind === "positionVector") return <VectorEnds parts={shown} />;
+  const gang = gangsUniform(control.kind) && (shown.length <= 1 || shown.every((part) => part === shown[0]));
+  const fields = axes && !gang ? axes.map((_, index) => shown[index] ?? shown[0] ?? "") : gang || !axes ? (gang ? [shown[0] ?? control.value] : shown) : shown;
+  const labels = axes && !gang ? axes : [];
   const single = Number(fields.length === 1 ? fields[0] : Number.NaN);
-  const ranged = control.min != null && control.max != null && control.max > control.min && Number.isFinite(single);
+  const ranged = showsSlider(control.kind) && control.min != null && control.max != null && control.max > control.min && Number.isFinite(single);
+  const splitCount = axes?.length ?? componentCount(control.kind);
   return (
     <span className="nk-channels">
       {fields.map((part, index) => (
-        <input key={index} value={part} readOnly size={7} />
+        <span className="nk-channels" key={labels[index] ?? index}>
+          {labels[index] ? <span className="nk-axis">{labels[index]}</span> : null}
+          <input value={part} readOnly size={7} />
+        </span>
       ))}
-      {uniform && count > 1 ? <span className="nk-dim">{count}</span> : null}
+      {gang && splitCount > 1 ? <span className="nk-dim">{splitCount}</span> : null}
       {ranged && control.min != null && control.max != null ? (
         <RangeSlider value={single} min={control.min} max={control.max} />
       ) : null}
+    </span>
+  );
+}
+
+function VectorEnds(props: { parts: string[] }): JSX.Element {
+  const from = ["x", "y", "z"].map((label, index) => ({ label, value: props.parts[index] ?? "" }));
+  const to = ["x", "y", "z"].map((label, index) => ({ label, value: props.parts[index + 3] ?? "" }));
+  return (
+    <span className="nk-stack">
+      <span className="nk-channels"><span className="nk-axis">from</span>{from.map((field) => <AxisField key={`f${field.label}`} label={field.label} value={field.value} />)}</span>
+      <span className="nk-channels"><span className="nk-axis">to</span>{to.map((field) => <AxisField key={`t${field.label}`} label={field.label} value={field.value} />)}</span>
+    </span>
+  );
+}
+
+function AxisField(props: { label: string; value: string }): JSX.Element {
+  return (
+    <span className="nk-channels">
+      <span className="nk-axis">{props.label}</span>
+      <input value={props.value} readOnly size={7} />
+    </span>
+  );
+}
+
+function Matrix(props: { rows: string[][] }): JSX.Element {
+  return (
+    <span className="nk-matrix">
+      {props.rows.map((row, rowIndex) => (
+        <span className="nk-channels" key={rowIndex}>
+          {row.map((cell, cellIndex) => (
+            <input key={cellIndex} value={cell} readOnly size={4} />
+          ))}
+        </span>
+      ))}
     </span>
   );
 }
